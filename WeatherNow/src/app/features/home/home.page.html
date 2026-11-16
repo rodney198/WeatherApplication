@@ -39,6 +39,11 @@
       retryLabel="Retry"
       (retry)="refreshWeather()"
     ></app-error-state>
+    <div class="demo-fallback-prompt">
+      <ion-button fill="outline" size="small" (click)="loadDemoWeather()">
+        Explore with Demo Data
+      </ion-button>
+    </div>
   }
 
   <!-- Weather Dashboard -->

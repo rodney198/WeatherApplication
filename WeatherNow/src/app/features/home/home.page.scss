@@ -39,6 +39,18 @@
   opacity: 0.8;
 }
 
+.demo-fallback-prompt {
+  display: flex;
+  justify-content: center;
+  margin-top: -8px;
+  margin-bottom: 24px;
+
+  ion-button {
+    --color: #ffffff;
+    --border-color: rgba(255, 255, 255, 0.6);
+  }
+}
+
 .dashboard {
   display: flex;
   flex-direction: column;

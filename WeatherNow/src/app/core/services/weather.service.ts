@@ -299,7 +299,9 @@ export class WeatherService {
   private handleError(error: unknown): Error {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401) {
-        return new Error('Invalid OpenWeatherMap API key. Please check your environment configuration.');
+        return new Error(
+          'OpenWeatherMap returned 401 (Unauthorized). Note: Newly created OpenWeatherMap API keys take 10 to 30 minutes to activate across their servers. Please verify your email and try again shortly.',
+        );
       }
       if (error.status === 404) {
         return new Error('Location not found. Please try a different location.');

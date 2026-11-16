@@ -192,6 +192,21 @@ export class HomePage implements OnInit {
   }
 
   /**
+   * Switch to demo mode while waiting for live API key activation
+   */
+  loadDemoWeather(): void {
+    const coords = this.locationState.snapshot.current || { latitude: 40.7128, longitude: -74.006 };
+    this.weatherState.setLoading(true);
+    this.weatherState.setError(null);
+    const demo = (this.weatherService as any).createMockWeatherResponse(
+      coords.latitude,
+      coords.longitude,
+      this.temperatureUnit(),
+    );
+    this.weatherState.setWeather(demo);
+  }
+
+  /**
    * Handle pull-to-refresh
    */
   async onRefresh(event: { target: HTMLIonRefresherElement }): Promise<void> {

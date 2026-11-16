@@ -30,6 +30,8 @@ describe('WeatherService', () => {
       ],
     });
     service = TestBed.inject(WeatherService);
+    // Ensure test baseline uses unconfigured key for fallback & caching tests
+    (service as any).apiKey = 'YOUR_API_KEY_HERE';
   });
 
   it('should be created', () => {
@@ -108,7 +110,7 @@ describe('WeatherService', () => {
             error: (err) => reject(err),
           });
       }),
-    ).rejects.toThrow(/Invalid OpenWeatherMap API key/);
+    ).rejects.toThrow(/OpenWeatherMap returned 401/);
   });
 
   it('should handle rate limits (429) gracefully', async () => {
