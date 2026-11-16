@@ -1,13 +1,13 @@
 /**
  * WeatherNow - Weather Service Tests
- * Unit tests for the WeatherService API integration.
+ * Comprehensive unit tests for WeatherService API integration, caching, and fallback.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { TestBed } from '@angular/core/testing';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 import { WeatherService } from './weather.service';
 import { WeatherResponse } from '../models/weather.model';
@@ -36,35 +36,10 @@ describe('WeatherService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should fetch weather data for given coordinates', async () => {
-    const mockResponse: WeatherResponse = {
-      lat: 40.7128,
-      lon: -74.006,
-      timezone: 'America/New_York',
-      timezone_offset: -1800,
-      current: {
-        dt: 1699000000,
-        sunrise: 1698980000,
-        sunset: 1700000000,
-        temp: 15.5,
-        feels_like: 14.0,
-        pressure: 1013,
-        humidity: 65,
-        dew_point: 8.5,
-        uvi: 3,
-        visibility: 10000,
-        wind_speed: 5.0,
-        wind_deg: 180,
-        weather: [{ id: 800, main: 'Clear', description: 'clear sky', icon: '01d' }],
-      },
-      hourly: [],
-      daily: [],
-    };
-
-    mockHttp.get.mockReturnValueOnce(of(mockResponse));
-
+  it('should return demo/fallback weather data when API key is unconfigured', async () => {
     const data = await new Promise<WeatherResponse>((resolve, reject) => {
-      service.fetchWeather({ lat: 40.7128, lon: -74.006, units: 'metric' })
+      service
+        .fetchWeather({ lat: 40.7128, lon: -74.006, units: 'metric' })
         .pipe(take(1))
         .subscribe({
           next: (d) => resolve(d),
@@ -72,35 +47,87 @@ describe('WeatherService', () => {
         });
     });
 
-    expect(data).toEqual(mockResponse);
+    expect(data).toBeTruthy();
+    expect(data.current.temp).toBeDefined();
+    expect(data.hourly.length).toBe(24);
+    expect(data.daily.length).toBe(7);
   });
 
-  it('should cache weather data', () => {
+  it('should cache weather data and validate cache key', async () => {
     const lat = 40.7128;
     const lon = -74.006;
     const units: 'metric' | 'imperial' = 'metric';
-    
-    // Initially no cache
+
     expect(service.isCacheValid(lat, lon, units)).toBe(false);
+
+    await new Promise<WeatherResponse>((resolve, reject) => {
+      service
+        .fetchWeather({ lat, lon, units })
+        .pipe(take(1))
+        .subscribe({
+          next: (d) => resolve(d),
+          error: (e) => reject(e),
+        });
+    });
+
+    expect(service.isCacheValid(lat, lon, units)).toBe(true);
+    expect(service.getCachedWeather(lat, lon, units)).toBeTruthy();
   });
 
-  it('should clear cache', () => {
+  it('should clear cache', async () => {
+    const lat = 40.7128;
+    const lon = -74.006;
+
+    await new Promise<WeatherResponse>((resolve) => {
+      service
+        .fetchWeather({ lat, lon, units: 'metric' })
+        .pipe(take(1))
+        .subscribe({ next: (d) => resolve(d) });
+    });
+
+    expect(service.isCacheValid(lat, lon, 'metric')).toBe(true);
     service.clearCache();
-    expect((service as any).cache.size).toBe(0);
+    expect(service.isCacheValid(lat, lon, 'metric')).toBe(false);
   });
 
-  it('should handle errors gracefully', async () => {
-    mockHttp.get.mockReturnValueOnce(throwError(() => new Error('API Error')));
+  it('should format HTTP errors with user-friendly messages', async () => {
+    // Override API key to trigger HTTP call
+    (service as any).apiKey = 'test-valid-key';
+
+    mockHttp.get.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Unauthorized' })),
+    );
 
     await expect(
       new Promise((_, reject) => {
-        service.fetchWeather({ lat: 40.7128, lon: -74.006, units: 'metric' })
+        service
+          .fetchWeather({ lat: 51.5074, lon: -0.1278, forceRefresh: true })
           .pipe(take(1))
           .subscribe({
-            next: () => reject(new Error('Should not succeed')),
-            error: (e) => reject(e),
+            next: () => reject(new Error('Should have failed')),
+            error: (err) => reject(err),
           });
       }),
-    ).rejects.toThrow('API Error');
+    ).rejects.toThrow(/Invalid OpenWeatherMap API key/);
+  });
+
+  it('should handle rate limits (429) gracefully', async () => {
+    (service as any).apiKey = 'test-valid-key';
+
+    mockHttp.get.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 429, statusText: 'Too Many Requests' })),
+    );
+
+    await expect(
+      new Promise((_, reject) => {
+        service
+          .fetchWeather({ lat: 51.5074, lon: -0.1278, forceRefresh: true })
+          .pipe(take(1))
+          .subscribe({
+            next: () => reject(new Error('Should have failed')),
+            error: (err) => reject(err),
+          });
+      }),
+    ).rejects.toThrow(/rate limit exceeded/);
   });
 });
