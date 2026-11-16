@@ -4,9 +4,10 @@
  * Built with Angular standalone components and reactive signals for zoneless change detection.
  */
 
-import { Component, inject, computed, OnInit } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, inject, computed, OnInit, DestroyRef } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { distinctUntilChanged, skip } from 'rxjs/operators';
 import { PercentPipe, TitleCasePipe } from '@angular/common';
 
 import {
@@ -81,6 +82,7 @@ export class HomePage implements OnInit {
   private readonly weatherService = inject(WeatherService);
   private readonly locationService = inject(LocationService);
   private readonly geocoding = inject(GeocodingService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Reactive state signals for robust zoneless change detection
   readonly current = toSignal(this.weatherState.current$, { initialValue: null });
@@ -119,6 +121,20 @@ export class HomePage implements OnInit {
 
   ngOnInit(): void {
     this.initializeWeather();
+
+    // Dynamically re-fetch weather in new units when temperature unit setting changes
+    this.settings.temperatureUnit$
+      .pipe(
+        distinctUntilChanged(),
+        skip(1),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        const coords = this.locationState.snapshot.current;
+        if (coords) {
+          this.fetchWeather(coords.latitude, coords.longitude, true);
+        }
+      });
   }
 
   /**
