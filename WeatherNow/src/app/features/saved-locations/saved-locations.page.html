@@ -1,0 +1,47 @@
+<ion-content>
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>Saved Locations</ion-title>
+      <ion-buttons slot="start">
+        <ion-back-button></ion-back-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="saved-locations-container">
+    <ion-list *ngIf="savedLocations | async as locations" class="locations-list">
+      <ion-item
+        *ngFor="let location of locations"
+        (click)="onSwitchLocation(location)"
+        button
+        detail="false"
+        [class.current]="location.isCurrent"
+      >
+        <ion-icon name="location" slot="start"></ion-icon>
+        <ion-label>
+          <h3>{{ location.name }}</h3>
+          <p *ngIf="location.state">{{ location.state }}, {{ location.country }}</p>
+          <p *ngIf="!location.state">{{ location.country }}</p>
+        </ion-label>
+        <ion-button slot="end" fill="clear" (click)="$event.stopPropagation(); onDeleteLocation(location)">
+          <ion-icon name="trash-outline" color="danger"></ion-icon>
+        </ion-button>
+      </ion-item>
+    </ion-list>
+
+    <div *ngIf="!(savedLocations | async)?.length" class="empty-state">
+      <ion-icon name="bookmark-outline" class="empty-icon"></ion-icon>
+      <h3>No saved locations</h3>
+      <p>Add cities to your favorites from the search page</p>
+    </div>
+  </div>
+
+  <ion-alert
+    [isOpen]="showDeleteAlert"
+    header="Delete Location"
+    message="Are you sure you want to remove this location from your saved locations?"
+    [buttons]="['Cancel', 'Delete']"
+    (didDismiss)="cancelDelete()"
+  >
+  </ion-alert>
+</ion-content>

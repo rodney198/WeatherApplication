@@ -1,0 +1,49 @@
+<ion-content>
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>Settings</ion-title>
+      <ion-buttons slot="start">
+        <ion-back-button></ion-back-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="settings-container">
+    <ion-list class="settings-list">
+      <ion-item>
+        <ion-icon name="thermometer" slot="start"></ion-icon>
+        <ion-label>
+          <h3>Temperature Unit</h3>
+          <p>Choose between Celsius and Fahrenheit</p>
+        </ion-label>
+        <ion-toggle
+          [checked]="temperatureUnit === 'imperial'"
+          (ionChange)="onTemperatureUnitChange($event)"
+        ></ion-toggle>
+      </ion-item>
+
+      <ion-item button (click)="onClearData()">
+        <ion-icon name="trash-outline" slot="start" color="danger"></ion-icon>
+        <ion-label>
+          <h3>Clear All Data</h3>
+          <p>Remove saved locations and preferences</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <div class="app-info">
+      <p>WeatherNow</p>
+      <p class="version">Version {{ version }}</p>
+      <p class="description">Powered by OpenWeatherMap</p>
+    </div>
+  </div>
+
+  <ion-alert
+    [isOpen]="showClearDataAlert"
+    header="Clear All Data"
+    message="Are you sure? This will remove all saved locations and reset preferences."
+    [buttons]="['Cancel', 'Clear Data']"
+    (didDismiss)="cancelClearData()"
+  >
+  </ion-alert>
+</ion-content>

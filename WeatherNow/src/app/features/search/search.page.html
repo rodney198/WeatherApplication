@@ -1,0 +1,54 @@
+<ion-content>
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>Search City</ion-title>
+      <ion-buttons slot="start">
+        <ion-back-button></ion-back-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="search-container">
+    <ion-searchbar
+      (ionInput)="onSearchInput($event)"
+      placeholder="Search for a city..."
+      debounce="300"
+    ></ion-searchbar>
+
+    <div class="results-container">
+      <!-- Loading -->
+      <div *ngIf="loading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="error-state">
+        <ion-icon name="alert-circle"></ion-icon>
+        <p>{{ error }}</p>
+      </div>
+
+      <!-- No Results -->
+      <div *ngIf="noResults && !loading" class="empty-state">
+        <ion-icon name="search"></ion-icon>
+        <p>No cities found for "{{ searchControl.value }}"</p>
+      </div>
+
+      <!-- Suggestions -->
+      <ion-list *ngIf="suggestions().length > 0" class="suggestions-list">
+        <ion-item
+          *ngFor="let city of suggestions()"
+          (click)="onCitySelect(city)"
+          button
+          detail="false"
+        >
+          <ion-icon name="location" slot="start"></ion-icon>
+          <ion-label>
+            <h3>{{ city.name }}</h3>
+            <p *ngIf="city.state">{{ city.state }}, {{ city.country }}</p>
+            <p *ngIf="!city.state">{{ city.country }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </div>
+  </div>
+</ion-content>

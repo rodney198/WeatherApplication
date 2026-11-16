@@ -1,0 +1,74 @@
+/**
+ * WeatherNow - Global Styles
+ * Mobile-first design with dark/light theme support.
+ */
+
+:root {
+  --ion-color-primary: #3880ff;
+  --ion-color-secondary: #3dc2ff;
+  --ion-color-tertiary: #5260ff;
+  --ion-color-success: #2dd364;
+  --ion-color-warning: #ffc409;
+  --ion-color-danger: #ff3b30;
+  --ion-color-medium: #92949c;
+  --ion-color-dark: #1f2430;
+  --ion-color-light: #f4f5f8;
+  --ion-color-background: #f4f5f8;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+ion-app {
+  --background: var(--ion-color-background);
+}
+
+/* Safe area support */
+.ion-safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.ion-safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Card styles */
+.weather-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #3880ff 0%, #5260ff 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+}
+
+.gradient-cool {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}

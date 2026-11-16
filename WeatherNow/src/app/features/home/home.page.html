@@ -1,0 +1,127 @@
+<ion-content class="home-content">
+  <!-- Loading State -->
+  <div *ngIf="loading && !hasData" class="loading-container">
+    <ion-spinner name="crescent" class="spinner"></ion-spinner>
+    <p class="loading-text">Loading weather...</p>
+  </div>
+
+  <!-- Error State -->
+  <app-error-state
+    *ngIf="!loading && errorMessage"
+    [message]="errorMessage"
+    icon="alert-circle"
+    retryLabel="Retry"
+    (retry)="loadWeather()"
+  ></app-error-state>
+
+  <!-- Weather Dashboard -->
+  <div *ngIf="getCurrent() as current" class="dashboard">
+    <!-- Location Header -->
+    <div class="location-header">
+      <ion-icon name="location" class="location-icon"></ion-icon>
+      <h2 class="location-name">{{ currentLocationName }}</h2>
+    </div>
+
+    <!-- Current Weather Card -->
+    <div class="current-weather-card">
+      <div class="weather-main">
+        <app-weather-icon
+          [icon]="getIcon(current.weather[0]?.icon || '01d')"
+          size="large"
+        ></app-weather-icon>
+        <div class="temp-display">
+          <span class="temperature">{{ current.temp | temperature: temperatureUnit }}</span>
+          <span class="condition">{{ current.weather[0]?.description | titlecase }}</span>
+        </div>
+      </div>
+
+      <div class="weather-details">
+        <div class="detail-item">
+          <span class="detail-label">Feels like</span>
+          <span class="detail-value">{{ current.feels_like | temperature: temperatureUnit }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">High</span>
+          <span class="detail-value">{{ getTempHigh(current) | temperature: temperatureUnit }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Low</span>
+          <span class="detail-value">{{ getTempLow(current) | temperature: temperatureUnit }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Humidity</span>
+          <span class="detail-value">{{ current.humidity }}%</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Wind</span>
+          <span class="detail-value">{{ current.wind_speed | windSpeed: temperatureUnit }} {{ current.wind_deg | windDirection }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Pressure</span>
+          <span class="detail-value">{{ current.pressure | pressure }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Visibility</span>
+          <span class="detail-value">{{ current.visibility | visibility }}</span>
+        </div>
+      </div>
+
+      <!-- Sunrise / Sunset -->
+      <div class="sun-times">
+        <div class="sun-item">
+          <ion-icon name="sunny" class="sun-icon"></ion-icon>
+          <span>Sunrise {{ getSunrise(current) | dateTime: 'time' }}</span>
+        </div>
+        <div class="sun-item">
+          <ion-icon name="moon" class="moon-icon"></ion-icon>
+          <span>Sunset {{ getSunset(current) | dateTime: 'time' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly Forecast -->
+    <div class="forecast-section" *ngIf="hourly && hourly.length > 0">
+      <h3 class="section-title">Hourly Forecast</h3>
+      <div class="hourly-scroll">
+        <div class="hourly-item" *ngFor="let hour of hourly | slice: 0:24">
+          <span class="hour-time">{{ hour.dt | dateTime: 'time' }}</span>
+          <app-weather-icon [icon]="getIcon(hour.weather[0]?.icon || '01d')" size="small"></app-weather-icon>
+          <span class="hour-temp">{{ hour.temp | temperature: temperatureUnit }}</span>
+          <span class="hour-pop" *ngIf="hour.pop && hour.pop > 0">
+            <ion-icon name="rainy" class="pop-icon"></ion-icon>{{ (hour.pop * 100) | percent: '1.0-0' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Forecast -->
+    <div class="forecast-section" *ngIf="daily && daily.length > 0">
+      <h3 class="section-title">7-Day Forecast</h3>
+      <div class="weekly-list">
+        <div class="weekly-item" *ngFor="let day of daily | slice: 0:7">
+          <span class="day-name">{{ day.dt | dateTime: 'date' }}</span>
+          <app-weather-icon [icon]="getIcon(day.weather[0]?.icon || '01d')" size="small"></app-weather-icon>
+          <div class="weekly-temps">
+            <span class="weekly-high">{{ day.temp.max | temperature: temperatureUnit }}</span>
+            <span class="weekly-low">{{ day.temp.min | temperature: temperatureUnit }}</span>
+          </div>
+          <span class="weekly-pop" *ngIf="day.pop && day.pop > 0">
+            <ion-icon name="rainy" class="pop-icon"></ion-icon>{{ (day.pop * 100) | percent: '1.0-0' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <app-empty-state
+    *ngIf="!loading && !errorMessage && !getCurrent()"
+    title="No weather data"
+    message="Pull down to refresh or search for a city"
+    icon="cloud-outline"
+  ></app-empty-state>
+
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+</ion-content>

@@ -1,0 +1,7 @@
+{
+  "name": "WeatherNow",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
