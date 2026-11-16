@@ -1,167 +1,229 @@
-# WeatherNow
+# WeatherNow – Cross-Platform Weather Application
 
-A modern, production-quality cross-platform weather application built with Ionic, Angular, TypeScript, and Capacitor.
+A modern, production-quality cross-platform weather application built with **Ionic Framework (v9)**, **Angular**, **TypeScript**, and **Capacitor (v8)**.
+
+---
 
 ## Table of Contents
 
 - [Project Overview](#project-overview)
+- [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [Architecture](#architecture)
-- [Features](#features)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
+- [Installation & Setup](#installation--setup)
 - [Development Commands](#development-commands)
 - [Weather API Configuration](#weather-api-configuration)
-- [iOS Setup](#ios-setup)
-- [Android Setup](#android-setup)
-- [Testing](#testing)
-- [Git Branching and Commit Strategy](#git-branching-and-commit-strategy)
+- [Native Platform Integration](#native-platform-integration)
+  - [iOS Setup](#ios-setup)
+  - [Android Setup](#android-setup)
+  - [Capacitor Plugins](#capacitor-plugins)
+- [Testing & Quality Assurance](#testing--quality-assurance)
+- [Git Branching Strategy](#git-branching-strategy)
+- [License](#license)
+
+---
 
 ## Project Overview
 
-WeatherNow is a fully functional weather application that demonstrates modern hybrid mobile development practices. It features current weather conditions, hourly and weekly forecasts, city search, saved locations, and native platform integration.
+**WeatherNow** is an engineered mobile weather application delivering real-time conditions, 24-hour hourly forecasts, and 7-day weekly outlooks in an accessible, mobile-first design. Designed for high performance on both iOS and Android devices, it leverages native device capabilities including GPS Geolocation, persistent storage, status bar customization, and splash screen management while gracefully supporting offline scenarios and API rate limits.
+
+---
+
+## Key Features
+
+1. **Weather Dashboard**:
+   - Location display (GPS-detected city or searched location).
+   - Current temperature with dynamic unit formatting (°C / °F).
+   - Weather condition description with iconography.
+   - Meteorological metrics: Feels-like temperature, Daily High & Low, Humidity percentage, Wind speed & directional heading, Atmospheric pressure (hPa), Visibility (km/m), and Sunrise/Sunset times.
+2. **Device Geolocation**:
+   - Native Capacitor Geolocation integration with runtime permission handling.
+   - Coordinate caching and reverse geocoding to resolve friendly locality names.
+   - Automatic fallback to configured default city upon denial or hardware timeout.
+3. **City Search & Autocomplete**:
+   - Debounced search queries with OpenWeatherMap Geocoding API.
+   - Query-keyed in-flight request deduplication.
+   - Quick "Save to Favorites" action directly from search results.
+4. **Hourly Forecast (24 Hours)**:
+   - Horizontally scrollable timeline card with responsive glassmorphism design.
+   - Timestamps, condition icons, temperatures, and mathematically accurate precipitation probabilities.
+5. **Weekly Forecast (7 Days)**:
+   - 7-day daily breakdown with High/Low temperatures, condition icons, and precipitation indicators.
+6. **Saved Locations & Persistence**:
+   - Favorite/bookmark cities for instant access.
+   - Lightweight local persistence powered by Capacitor Preferences.
+   - Seamless switching between locations and instant weather refresh.
+7. **Unit Customization & Settings**:
+   - Instant toggle between Metric (Celsius, m/s) and Imperial (Fahrenheit, mph) units.
+   - Persistent settings across application restarts.
+   - Cache clearing and data reset capabilities.
+8. **Resilience, Offline & Error States**:
+   - Pull-to-refresh data synchronizer.
+   - Network failure interception with descriptive user messages.
+   - Local in-memory caching with Time-To-Live (TTL) expiration.
+   - Graceful fallback demo dataset when unconfigured or disconnected.
+
+---
 
 ## Technology Stack
 
 - **Ionic Framework** (v9) - Mobile UI components and design system
-- **Angular** (v22) - Application framework and dependency injection
-- **TypeScript** (v6) - Type-safe development
-- **Capacitor** (v8) - Native platform integration
-- **RxJS** - Reactive state management
-- **Vitest** - Unit testing
-- **OpenWeatherMap API** - Weather data source
+- **Angular** - Standalone components, reactive signals, zoneless change detection
+- **TypeScript** - Strict type safety and clear models
+- **Capacitor** (v8) - Native iOS & Android runtime
+- **RxJS** - Reactive state management via BehaviorSubjects
+- **Vitest** - Unit test runner with `@angular/build`
+- **OpenWeatherMap REST API** - Weather data & geocoding provider
+
+---
 
 ## Architecture
 
-The application follows a modular Angular architecture:
+The application follows a clean, modular Angular architecture:
 
-```
+```text
 src/app/
-├── core/           # Services, models, interceptors, state management
-├── shared/         # Reusable UI components, pipes, directives
-├── features/       # Home, Search, Saved Locations, Settings
-├── app.config.ts   # Application providers
-└── app.routes.ts   # Routing configuration
+├── core/
+│   ├── interceptors/     # HTTP interceptors (auth, error mapping)
+│   ├── models/           # Strongly typed interfaces (weather, location, settings)
+│   ├── services/         # API and device services (weather, location, native, storage)
+│   │   └── state/        # Reactive state services (weather, location, settings)
+│   └── utils/            # Icon mapping utilities
+├── features/
+│   ├── home/             # Main weather dashboard & forecasts
+│   ├── search/           # City search & suggestions
+│   ├── saved-locations/  # Saved/favorite cities manager
+│   └── settings/         # Unit preferences & app info
+├── shared/
+│   ├── components/       # Weather icons, error states, empty states
+│   └── pipes/            # Temperature, wind, datetime, pressure formatters
+├── app.component.ts      # Root application shell
+├── app.config.ts         # Application providers & dependency injection
+└── app.routes.ts         # Feature-based lazy-loaded routes
 ```
 
-### State Management
-
-Reactive state is managed using RxJS BehaviorSubject services:
-- `WeatherStateService` - Weather data state
-- `LocationStateService` - Location and saved locations state
-- `SettingsStateService` - User preferences state
-
-## Features
-
-- Current weather with temperature, conditions, and detailed metrics
-- Hourly forecast (24 hours)
-- Weekly forecast (7 days)
-- Device geolocation with permission handling
-- City search with debounced suggestions
-- Saved locations with local persistence
-- Celsius/Fahrenheit temperature selection
-- Pull-to-refresh functionality
-- Loading, error, and empty states
-- Native Capacitor integration (iOS/Android)
+---
 
 ## Prerequisites
 
-- Node.js (v18+)
-- npm or yarn
-- Android Studio (for Android development)
-- Xcode (for iOS development)
-- CocoaPods (for iOS dependencies)
+- **Node.js** (`v18+` LTS)
+- **npm** (`v9+`)
+- **Android Studio** (for Android builds)
+- **Xcode** (for iOS builds, macOS only)
 
-## Installation
+---
+
+## Installation & Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/rodney198/WeatherApplication.git
-cd WeatherApplication
-
-# Switch to development branch
-git checkout development
+cd WeatherApplication/WeatherNow
 
 # Install dependencies
-cd WeatherNow
 npm install
 
-# Set up Capacitor platforms
-npx cap add ios
-npx cap add android
+# Synchronize Capacitor native platforms
+npx cap sync
 ```
+
+---
 
 ## Development Commands
 
 ```bash
-# Start development server
+# Start local development server
 npm start
 
-# Build for production
-npm run build
+# Run unit tests once
+npm test -- --watch=false
 
-# Build for development
-npm run build -- --configuration development
-
-# Run tests
+# Run unit tests in watch mode
 npm test
 
-# Lint code
+# Run ESLint linter
 npm run lint
+
+# Build production bundle
+npm run build
+
+# Build development bundle with source maps
+npm run watch
 ```
+
+---
 
 ## Weather API Configuration
 
-The application uses the OpenWeatherMap One Call API 2.5. To configure:
-
-1. Sign up at [OpenWeatherMap](https://openweathermap.org/api) and get your API key
-2. Set the API key in the environment configuration:
+1. Obtain a free API key at [OpenWeatherMap](https://openweathermap.org/api).
+2. Set your API key in `src/environments/environment.ts` and `src/environments/environment.prod.ts`:
    ```typescript
-   // src/environments/environment.ts
-   weatherApiKey: 'YOUR_API_KEY_HERE'
-   ```
-3. For production builds, inject the key at build time
-
-## iOS Setup
-
-1. Open the project in Xcode:
-   ```bash
-   cd WeatherNow
-   npx cap open ios
+   export const environment = {
+     production: false,
+     weatherApiBaseUrl: 'https://api.openweathermap.org/data/2.5',
+     geoApiBaseUrl: 'https://api.openweathermap.org/geo/1.0/direct',
+     weatherApiKey: 'YOUR_API_KEY_HERE',
+     weatherCacheTtl: 30 * 60 * 1000,
+     searchDebounceMs: 300,
+     maxSavedLocations: 10,
+   };
    ```
 
-2. Ensure location permissions are configured in `ios/App/App/Info.plist`
+---
 
-3. Build and run on a physical device or simulator
+## Native Platform Integration
 
-## Android Setup
+### Capacitor Plugins Installed:
+- `@capacitor/geolocation`
+- `@capacitor/preferences`
+- `@capacitor/status-bar`
+- `@capacitor/splash-screen`
+- `@capacitor/app`
+- `@capacitor/haptics`
+- `@capacitor/keyboard`
 
-1. Set up Android Studio with the required SDKs
-2. Open the project:
-   ```bash
-   cd WeatherNow
-   npx cap open android
-   ```
-
-3. Build and run on a physical device or emulator
-
-## Testing
-
+### iOS Setup:
 ```bash
-# Run all tests
-npm test
+npx cap sync ios
+npx cap open ios
+```
+Location usage descriptions are configured in `ios/App/App/Info.plist`.
 
-# Run tests in watch mode
-npm test -- --watch
+### Android Setup:
+```bash
+npx cap sync android
+npx cap open android
+```
+Permissions (`INTERNET`, `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION`) are configured in `android/app/src/main/AndroidManifest.xml`.
+
+---
+
+## Testing & Quality Assurance
+
+WeatherNow features 55 comprehensive unit tests covering:
+- `WeatherService` (API calls, data mapping, caching, error handling, rate limits, fallback)
+- `LocationService` (coordinates, permissions, error mapping)
+- `GeocodingService` (city search, suggestions, reverse geocoding)
+- `LocationStateService` & `SettingsStateService` (state transitions and persistence)
+- `NativeService` (status bar, splash screen, app lifecycle)
+- Formatting Pipes (`TemperaturePipe`, `WindDirectionPipe`, `WindSpeedPipe`, `DateTimePipe`, `PressurePipe`, `VisibilityPipe`)
+- UI Components (`WeatherIconComponent`, `ErrorStateComponent`, `EmptyStateComponent`)
+
+Run tests:
+```bash
+npm test -- --watch=false
 ```
 
-## Git Branching and Commit Strategy
+---
 
-- Development happens on the `development` branch
-- Features are committed individually with meaningful messages
-- Never commit to `main` or `master`
-- Follow semantic commit message conventions
+## Git Branching Strategy
+
+- `main`: Stable baseline containing documentation and release-ready builds.
+- `development`: Active branch where all feature development, validation, and testing takes place.
+
+---
 
 ## License
 
-This project is for demonstration purposes.
+This project is licensed under the MIT License.
