@@ -1,13 +1,13 @@
 /**
  * WeatherNow - Geocoding Service
  * City search using OpenWeatherMap Geocoding API.
- * Handles debouncing and request deduplication.
+ * Features query-keyed request caching and deduplication.
  */
 
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, timer } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, map,catchError, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError, shareReplay } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 
@@ -17,6 +17,15 @@ export interface CitySuggestion {
   state?: string;
   lat: number;
   lon: number;
+}
+
+export interface DirectGeocodingItem {
+  name: string;
+  local_names?: Record<string, string>;
+  lat: number;
+  lon: number;
+  country: string;
+  state?: string;
 }
 
 export interface SearchOptions {
@@ -30,60 +39,57 @@ export interface SearchOptions {
 export class GeocodingService {
   private readonly apiKey = environment.weatherApiKey;
   private readonly baseUrl = environment.geoApiBaseUrl;
-  private inflightRequest: Observable<CitySuggestion[]> | null = null;
+  private readonly http = inject(HttpClient);
 
-  constructor(private readonly http: HttpClient) {}
+  // Query-keyed in-flight request deduplication cache
+  private readonly inflightRequests = new Map<string, Observable<CitySuggestion[]>>();
 
   /**
-   * Search cities by name. Returns an Observable that emits debounced results.
-   * Use this with async pipe in components.
+   * Search cities by name.
    */
   searchCities(options: SearchOptions): Observable<CitySuggestion[]> {
-    const query = options.query.trim();
+    const query = options.query.trim().toLowerCase();
     if (!query || query.length < 2) {
       return of([]);
     }
 
-    // Deduplicate in-flight requests
-    if (this.inflightRequest) {
-      return this.inflightRequest;
+    const limit = options.limit || 5;
+    const cacheKey = `${query}_${limit}`;
+
+    // Return in-flight request if one is already running for the exact query
+    const existing = this.inflightRequests.get(cacheKey);
+    if (existing) {
+      return existing;
     }
 
     const params = new HttpParams()
       .set('q', query)
-      .set('limit', (options.limit || 5).toString())
+      .set('limit', limit.toString())
       .set('appid', this.apiKey);
 
-    this.inflightRequest = this.http
-      .get<any[]>(`${this.baseUrl}`, { params })
+    const request$ = this.http
+      .get<DirectGeocodingItem[]>(`${this.baseUrl}`, { params })
       .pipe(
         map((results) => this.mapResults(results)),
-        tap(() => (this.inflightRequest = null)),
-        catchError((error) => {
-          this.inflightRequest = null;
-          return of([]);
-        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+        catchError(() => of([])),
       );
 
-    return this.inflightRequest;
-  }
+    this.inflightRequests.set(cacheKey, request$);
 
-  /**
-   * Create a debounced search observable for use with form controls.
-   */
-  createDebouncedSearch(): (query: string) => Observable<CitySuggestion[]> {
-    return (query: string) =>
-      of(query).pipe(
-        debounceTime(environment.searchDebounceMs),
-        distinctUntilChanged(),
-        switchMap((q) => this.searchCities({ query: q })),
-      );
+    // Clean up cache entry after completion
+    request$.subscribe({
+      next: () => this.inflightRequests.delete(cacheKey),
+      error: () => this.inflightRequests.delete(cacheKey),
+    });
+
+    return request$;
   }
 
   /**
    * Map API response to CitySuggestion array.
    */
-  private mapResults(results: any[]): CitySuggestion[] {
+  private mapResults(results: DirectGeocodingItem[]): CitySuggestion[] {
     if (!Array.isArray(results)) return [];
     return results
       .filter((r) => r && r.name)

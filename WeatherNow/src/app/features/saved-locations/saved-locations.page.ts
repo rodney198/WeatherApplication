@@ -1,21 +1,38 @@
 /**
  * WeatherNow - Saved Locations Page
- * Allows users to manage saved/favorite cities.
+ * Allows users to view, switch, and delete bookmarked favorite cities.
  */
 
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
 
-import { IonContent, IonHeader, IonToolbar, IonTitle, IonBackButton, IonButtons, IonList, IonItem, IonIcon, IonLabel, IonButton, IonAlert } from '@ionic/angular';
+import {
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonBackButton,
+  IonButtons,
+  IonList,
+  IonItem,
+  IonIcon,
+  IonLabel,
+  IonButton,
+  IonAlert,
+} from '@ionic/angular';
 
 import { LocationStateService } from '../../core/services/state/location-state.service';
-import { AppStorageService } from '../../core/services/storage.service';
+import { WeatherStateService } from '../../core/services/state/weather-state.service';
+import { WeatherService } from '../../core/services/weather.service';
+import { SettingsStateService } from '../../core/services/state/settings-state.service';
 import { SavedLocation } from '../../core/models/location.model';
 
 @Component({
   selector: 'app-saved-locations',
   standalone: true,
   imports: [
+    RouterLink,
     IonContent,
     IonHeader,
     IonToolbar,
@@ -34,38 +51,76 @@ import { SavedLocation } from '../../core/models/location.model';
 })
 export class SavedLocationsPage {
   private readonly locationState = inject(LocationStateService);
-  private readonly storage = inject(AppStorageService);
+  private readonly weatherState = inject(WeatherStateService);
+  private readonly weatherService = inject(WeatherService);
+  private readonly settings = inject(SettingsStateService);
   private readonly router = inject(Router);
 
-  readonly savedLocations = this.locationState.savedLocations$;
-  readonly currentLocationId = this.locationState.snapshot.savedLocations.find((l) => l.isCurrent)?.id || null;
+  readonly savedLocations = toSignal(this.locationState.savedLocations$, {
+    initialValue: [],
+  });
 
-  showDeleteAlert = false;
-  deletingLocationId: string | null = null;
+  readonly showDeleteAlert = signal(false);
+  private deletingLocationId: string | null = null;
 
-  constructor() {}
+  readonly alertButtons = [
+    {
+      text: 'Cancel',
+      role: 'cancel',
+      handler: () => this.cancelDelete(),
+    },
+    {
+      text: 'Delete',
+      role: 'destructive',
+      handler: () => this.confirmDelete(),
+    },
+  ];
 
   onSwitchLocation(location: SavedLocation): void {
-    this.locationState.setCurrent({ latitude: location.lat, longitude: location.lon }, location.name);
+    const displayName = location.state
+      ? `${location.name}, ${location.state}, ${location.country}`
+      : `${location.name}, ${location.country}`;
+
+    this.locationState.setCurrent({ latitude: location.lat, longitude: location.lon }, displayName);
     this.locationState.setCurrentLocationId(location.id);
-    this.router.navigate(['/home']);
+
+    this.weatherState.setLoading(true);
+    this.weatherState.setError(null);
+
+    this.weatherService
+      .fetchWeather({
+        lat: location.lat,
+        lon: location.lon,
+        units: this.settings.snapshot.temperatureUnit,
+        forceRefresh: true,
+      })
+      .subscribe({
+        next: (data) => {
+          this.weatherState.setWeather(data);
+          this.router.navigate(['/home']);
+        },
+        error: (err) => {
+          this.weatherState.setError(err?.message || 'Failed to fetch weather');
+          this.router.navigate(['/home']);
+        },
+      });
   }
 
   onDeleteLocation(location: SavedLocation): void {
     this.deletingLocationId = location.id;
-    this.showDeleteAlert = true;
+    this.showDeleteAlert.set(true);
   }
 
   confirmDelete(): void {
     if (this.deletingLocationId) {
       this.locationState.removeSavedLocation(this.deletingLocationId);
     }
-    this.showDeleteAlert = false;
+    this.showDeleteAlert.set(false);
     this.deletingLocationId = null;
   }
 
   cancelDelete(): void {
-    this.showDeleteAlert = false;
+    this.showDeleteAlert.set(false);
     this.deletingLocationId = null;
   }
 }

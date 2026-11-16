@@ -5,7 +5,7 @@
  * Implements caching and error handling.
  */
 
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, tap } from 'rxjs';
 import { shareReplay, catchError, map } from 'rxjs/operators';
@@ -44,7 +44,7 @@ export class WeatherService {
   // In-flight request deduplication
   private inflightRequests = new Map<string, Observable<WeatherResponse>>();
 
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
 
   /**
    * Fetch weather data for given coordinates.

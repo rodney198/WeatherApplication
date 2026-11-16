@@ -1,14 +1,28 @@
 /**
  * WeatherNow - Settings Page
- * Allows users to configure temperature units and preferences.
+ * Allows users to configure temperature units, view application metadata, and clear saved data.
  */
 
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
-import { IonContent, IonHeader, IonToolbar, IonTitle, IonBackButton, IonButtons, IonList, IonItem, IonLabel, IonToggle, IonIcon, IonAlert } from '@ionic/angular';
+import {
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonBackButton,
+  IonButtons,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonToggle,
+  IonIcon,
+  IonAlert,
+} from '@ionic/angular';
 
 import { SettingsStateService } from '../../core/services/state/settings-state.service';
+import { LocationStateService } from '../../core/services/state/location-state.service';
 import { TemperatureUnit } from '../../core/models/settings.model';
 import { AppStorageService } from '../../core/services/storage.service';
 
@@ -34,15 +48,28 @@ import { AppStorageService } from '../../core/services/storage.service';
 })
 export class SettingsPage {
   private readonly settings = inject(SettingsStateService);
+  private readonly locationState = inject(LocationStateService);
   private readonly storage = inject(AppStorageService);
-  private readonly router = inject(Router);
 
-  readonly temperatureUnit = this.settings.snapshot.temperatureUnit;
+  readonly temperatureUnit = toSignal(this.settings.temperatureUnit$, {
+    initialValue: this.settings.snapshot.temperatureUnit,
+  });
+
   readonly version = '1.0.0';
+  readonly showClearDataAlert = signal(false);
 
-  showClearDataAlert = false;
-
-  constructor() {}
+  readonly alertButtons = [
+    {
+      text: 'Cancel',
+      role: 'cancel',
+      handler: () => this.cancelClearData(),
+    },
+    {
+      text: 'Clear Data',
+      role: 'destructive',
+      handler: () => this.confirmClearData(),
+    },
+  ];
 
   onTemperatureUnitChange(event: CustomEvent): void {
     const checked = event.detail.checked;
@@ -51,15 +78,17 @@ export class SettingsPage {
   }
 
   onClearData(): void {
-    this.showClearDataAlert = true;
+    this.showClearDataAlert.set(true);
   }
 
   async confirmClearData(): Promise<void> {
     await this.storage.clear();
-    this.showClearDataAlert = false;
+    this.settings.loadSettings({});
+    this.locationState.setSavedLocations([]);
+    this.showClearDataAlert.set(false);
   }
 
   cancelClearData(): void {
-    this.showClearDataAlert = false;
+    this.showClearDataAlert.set(false);
   }
 }

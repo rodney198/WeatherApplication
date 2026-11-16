@@ -1,38 +1,64 @@
 /**
  * WeatherNow - Home Page (Main Weather Dashboard)
  * Displays current weather, hourly forecast, and weekly forecast.
- * This is the primary view of the application.
+ * Built with Angular standalone components and reactive signals for zoneless change detection.
  */
 
-import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { PercentPipe, AsyncPipe, TitleCasePipe } from '@angular/common';
+import { Component, inject, computed, OnInit } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { PercentPipe, TitleCasePipe } from '@angular/common';
 
-import { IonContent, IonSpinner, IonRefresher, IonRefresherContent } from '@ionic/angular';
-import { IonIcon } from '@ionic/angular';
+import {
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonButton,
+  IonContent,
+  IonSpinner,
+  IonRefresher,
+  IonRefresherContent,
+  IonIcon,
+} from '@ionic/angular';
 
 import { WeatherStateService } from '../../core/services/state/weather-state.service';
 import { LocationStateService } from '../../core/services/state/location-state.service';
 import { SettingsStateService } from '../../core/services/state/settings-state.service';
 import { WeatherService } from '../../core/services/weather.service';
 import { LocationService } from '../../core/services/location.service';
-import { GeocodingService } from '../../core/services/geocoding.service';
 import { getWeatherIcon } from '../../core/utils/weather-icon.util';
-import { TemperaturePipe, WindDirectionPipe, WindSpeedPipe, DateTimePipe, PressurePipe, VisibilityPipe } from '../../shared/pipes/temperature.pipe';
-import { ErrorStateComponent, EmptyStateComponent, LoadingSkeletonComponent, WeatherIconComponent } from '../../shared/components/shared.components';
-import { CurrentWeather, HourlyForecast, DailyForecast } from '../../core/models/weather.model';
+import {
+  TemperaturePipe,
+  WindDirectionPipe,
+  WindSpeedPipe,
+  DateTimePipe,
+  PressurePipe,
+  VisibilityPipe,
+} from '../../shared/pipes/temperature.pipe';
+import {
+  ErrorStateComponent,
+  EmptyStateComponent,
+  WeatherIconComponent,
+} from '../../shared/components/shared.components';
+import { CurrentWeather } from '../../core/models/weather.model';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
+    RouterLink,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonButton,
     IonContent,
     IonSpinner,
     IonRefresher,
     IonRefresherContent,
     IonIcon,
     PercentPipe,
-    AsyncPipe,
     TitleCasePipe,
     TemperaturePipe,
     WindDirectionPipe,
@@ -42,7 +68,6 @@ import { CurrentWeather, HourlyForecast, DailyForecast } from '../../core/models
     VisibilityPipe,
     ErrorStateComponent,
     EmptyStateComponent,
-    LoadingSkeletonComponent,
     WeatherIconComponent,
   ],
   templateUrl: './home.page.html',
@@ -54,68 +79,144 @@ export class HomePage implements OnInit {
   private readonly settings = inject(SettingsStateService);
   private readonly weatherService = inject(WeatherService);
   private readonly locationService = inject(LocationService);
-  private readonly geocoding = inject(GeocodingService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  // Synchronous state for template rendering
-  current: CurrentWeather | null = null;
-  hourly: HourlyForecast[] = [];
-  daily: DailyForecast[] = [];
-  loading = false;
-  private _error: string | null = null;
-  hasData = false;
+  // Reactive state signals for robust zoneless change detection
+  readonly current = toSignal(this.weatherState.current$, { initialValue: null });
+  readonly hourly = toSignal(this.weatherState.hourly$, { initialValue: [] });
+  readonly daily = toSignal(this.weatherState.daily$, { initialValue: [] });
+  readonly loading = toSignal(this.weatherState.loading$, { initialValue: false });
+  readonly errorMessage = toSignal(this.weatherState.error$, { initialValue: null });
+  readonly hasData = toSignal(this.weatherState.hasData$, { initialValue: false });
 
-  readonly temperatureUnit = this.settings.snapshot.temperatureUnit;
-  readonly currentLocationName = computed(
-    () => this.locationState.snapshot.currentLocationName || 'Your Location',
-  );
+  readonly currentLocationName = toSignal(this.locationState.currentLocationName$, {
+    initialValue: 'Your Location',
+  });
+  readonly temperatureUnit = toSignal(this.settings.temperatureUnit$, {
+    initialValue: this.settings.snapshot.temperatureUnit,
+  });
+  readonly savedLocations = toSignal(this.locationState.savedLocations$, {
+    initialValue: [],
+  });
 
-  /** Error message for template (safe string). */
-  get errorMessage(): string {
-    return this._error || '';
-  }
+  // Computed signal to check if the current active location is in saved locations
+  readonly isSavedLocation = computed(() => {
+    const currentLoc = this.locationState.snapshot.current;
+    if (!currentLoc) return false;
+    return this.savedLocations().some(
+      (loc) =>
+        Math.abs(loc.lat - currentLoc.latitude) < 0.01 &&
+        Math.abs(loc.lon - currentLoc.longitude) < 0.01,
+    );
+  });
 
-  constructor() {}
+  // Display-ready hourly forecast (first 24 hours)
+  readonly next24Hours = computed(() => this.hourly().slice(0, 24));
+
+  // Display-ready daily forecast (7 days)
+  readonly next7Days = computed(() => this.daily().slice(0, 7));
 
   ngOnInit(): void {
-    this.subscribeToState();
-    this.loadWeather();
+    this.initializeWeather();
   }
 
   /**
-   * Subscribe to weather state changes.
+   * Initializes weather retrieval: checks current coordinates, requests device location if unset,
+   * or falls back to a sensible default.
    */
-  private subscribeToState(): void {
-    this.weatherState.weather$.subscribe((state) => {
-      this.current = state.current;
-      this.hourly = state.hourly;
-      this.daily = state.daily;
-      this.loading = state.loading;
-      this._error = state.error;
-      this.hasData = state.current !== null;
-    });
+  async initializeWeather(): Promise<void> {
+    const currentCoords = this.locationState.snapshot.current;
+    if (currentCoords) {
+      this.fetchWeather(currentCoords.latitude, currentCoords.longitude);
+      return;
+    }
+
+    // Try requesting device geolocation
+    try {
+      this.weatherState.setLoading(true);
+      const hasPermission = await this.locationService.checkPermission();
+      if (hasPermission) {
+        const position = await this.locationService.getCurrentPositionAsync();
+        this.locationState.setCurrent(
+          position.coordinates,
+          this.locationState.snapshot.currentLocationName || 'Current Location',
+        );
+        this.fetchWeather(position.coordinates.latitude, position.coordinates.longitude);
+        return;
+      }
+    } catch {
+      // Permission denied or unavailable - fallback to default location
+    }
+
+    // Fallback default coordinates (New York City)
+    const fallbackLat = 40.7128;
+    const fallbackLon = -74.006;
+    if (!this.locationState.snapshot.currentLocationName) {
+      this.locationState.setCurrent(
+        { latitude: fallbackLat, longitude: fallbackLon },
+        'New York, US',
+      );
+    }
+    this.fetchWeather(fallbackLat, fallbackLon);
   }
 
   /**
-   * Load weather data for current location or default location.
+   * Manual refresh trigger from header or pull-to-refresh
    */
-  loadWeather(): void {
+  async refreshWeather(): Promise<void> {
     const coords = this.locationState.snapshot.current;
     if (coords) {
-      this.fetchWeather(coords.latitude, coords.longitude);
+      await this.fetchWeatherPromise(coords.latitude, coords.longitude, true);
+    } else {
+      await this.initializeWeather();
     }
   }
 
   /**
-   * Fetch weather data for given coordinates.
+   * Handle pull-to-refresh
    */
-  private fetchWeather(lat: number, lon: number): void {
+  async onRefresh(event: { target: HTMLIonRefresherElement }): Promise<void> {
+    try {
+      await this.refreshWeather();
+    } finally {
+      event.target.complete();
+    }
+  }
+
+  /**
+   * Toggle saving the current location to favorites
+   */
+  toggleSaveLocation(): void {
+    const coords = this.locationState.snapshot.current;
+    const name = this.currentLocationName() || 'Saved Location';
+    if (!coords) return;
+
+    const existing = this.savedLocations().find(
+      (loc) =>
+        Math.abs(loc.lat - coords.latitude) < 0.01 &&
+        Math.abs(loc.lon - coords.longitude) < 0.01,
+    );
+
+    if (existing) {
+      this.locationState.removeSavedLocation(existing.id);
+    } else {
+      this.locationState.addSavedLocation({
+        name,
+        country: '',
+        lat: coords.latitude,
+        lon: coords.longitude,
+      });
+    }
+  }
+
+  /**
+   * Fetch weather data for given coordinates
+   */
+  private fetchWeather(lat: number, lon: number, forceRefresh = false): void {
     this.weatherState.setLoading(true);
     this.weatherState.setError(null);
 
     this.weatherService
-      .fetchWeather({ lat, lon, units: this.temperatureUnit })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .fetchWeather({ lat, lon, units: this.temperatureUnit(), forceRefresh })
       .subscribe({
         next: (data) => {
           this.weatherState.setWeather(data);
@@ -126,51 +227,44 @@ export class HomePage implements OnInit {
       });
   }
 
-  /**
-   * Handle pull-to-refresh.
-   */
-  onRefresh(event: any): void {
-    this.loadWeather();
-    setTimeout(() => event.target.complete(), 1500);
+  private fetchWeatherPromise(lat: number, lon: number, forceRefresh = false): Promise<void> {
+    return new Promise((resolve) => {
+      this.weatherState.setLoading(true);
+      this.weatherState.setError(null);
+
+      this.weatherService
+        .fetchWeather({ lat, lon, units: this.temperatureUnit(), forceRefresh })
+        .subscribe({
+          next: (data) => {
+            this.weatherState.setWeather(data);
+            resolve();
+          },
+          error: (err) => {
+            this.weatherState.setError(err?.message || 'Failed to fetch weather data');
+            resolve();
+          },
+        });
+    });
   }
 
   /**
-   * Get weather icon code.
+   * Weather icon helper
    */
   getIcon(code: string): string {
     return getWeatherIcon(code);
   }
 
   /**
-   * Get high temperature (defaults to current temp if not available).
+   * Strongly typed temperature high accessor
    */
   getTempHigh(current: CurrentWeather): number {
-    return (current as any).temp_max ?? current.temp;
+    return current.temp_max ?? current.temp;
   }
 
   /**
-   * Get low temperature (defaults to current temp if not available).
+   * Strongly typed temperature low accessor
    */
   getTempLow(current: CurrentWeather): number {
-    return (current as any).temp_min ?? current.temp;
-  }
-
-  /**
-   * Get sunrise timestamp (safe access).
-   */
-  getSunrise(current: CurrentWeather): number {
-    return current.sunrise;
-  }
-
-  /**
-   * Get sunset timestamp (safe access).
-   */
-  getSunset(current: CurrentWeather): number {
-    return current.sunset;
-  }
-
-  /** Template-safe accessor to avoid null-check issues. */
-  getCurrent(): CurrentWeather | null {
-    return this.current;
+    return current.temp_min ?? current.temp;
   }
 }

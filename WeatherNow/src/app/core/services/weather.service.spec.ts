@@ -6,6 +6,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { TestBed } from '@angular/core/testing';
+import { HttpClient } from '@angular/common/http';
 
 import { WeatherService } from './weather.service';
 import { WeatherResponse } from '../models/weather.model';
@@ -20,7 +22,14 @@ describe('WeatherService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new WeatherService(mockHttp as any);
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        WeatherService,
+        { provide: HttpClient, useValue: mockHttp },
+      ],
+    });
+    service = TestBed.inject(WeatherService);
   });
 
   it('should be created', () => {

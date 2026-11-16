@@ -106,7 +106,7 @@ export class ErrorStateComponent {
   @Input() message: string = 'Something went wrong';
   @Input() icon: string = 'alert-circle';
   @Input() retryLabel: string | null = null;
-  @Input() visible: boolean = false;
+  @Input() visible: boolean = true;
 
   @Output() retry = new EventEmitter<void>();
 }
@@ -147,5 +147,5 @@ export class EmptyStateComponent {
   @Input() title: string = 'No data available';
   @Input() message: string = '';
   @Input() icon: string = 'cloud-outline';
-  @Input() visible: boolean = false;
+  @Input() visible: boolean = true;
 }

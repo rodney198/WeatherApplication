@@ -1,3 +1,18 @@
+.home-toolbar {
+  --background: #667eea;
+  --color: #ffffff;
+
+  .app-title {
+    font-weight: 700;
+    font-size: 20px;
+    color: #ffffff;
+  }
+
+  ion-button {
+    --color: #ffffff;
+  }
+}
+
 .home-content {
   --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
@@ -33,9 +48,21 @@
 .location-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   color: white;
   padding: 8px 0;
+
+  .location-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .favorite-toggle {
+    --padding-start: 4px;
+    --padding-end: 4px;
+    font-size: 20px;
+  }
 }
 
 .location-icon {

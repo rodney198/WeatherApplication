@@ -15,7 +15,7 @@ export interface SavedLocation {
   state?: string;
   lat: number;
   lon: number;
-  isCurrent: boolean;
+  isCurrent?: boolean;
   addedAt: number;
 }
 

@@ -1,54 +1,76 @@
-<ion-content>
-  <ion-header class="ion-no-border">
-    <ion-toolbar>
-      <ion-title>Search City</ion-title>
-      <ion-buttons slot="start">
-        <ion-back-button></ion-back-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-header>
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Search City</ion-title>
+  </ion-toolbar>
+</ion-header>
 
+<ion-content>
   <div class="search-container">
     <ion-searchbar
       (ionInput)="onSearchInput($event)"
       placeholder="Search for a city..."
-      debounce="300"
+      [debounce]="0"
+      animated
     ></ion-searchbar>
 
     <div class="results-container">
       <!-- Loading -->
-      <div *ngIf="loading" class="loading-state">
-        <ion-spinner name="crescent"></ion-spinner>
-      </div>
+      @if (loading()) {
+        <div class="loading-state">
+          <ion-spinner name="crescent"></ion-spinner>
+          <p>Searching cities...</p>
+        </div>
+      }
 
       <!-- Error -->
-      <div *ngIf="error" class="error-state">
-        <ion-icon name="alert-circle"></ion-icon>
-        <p>{{ error }}</p>
-      </div>
+      @if (error()) {
+        <div class="error-state">
+          <ion-icon name="alert-circle"></ion-icon>
+          <p>{{ error() }}</p>
+        </div>
+      }
 
       <!-- No Results -->
-      <div *ngIf="noResults && !loading" class="empty-state">
-        <ion-icon name="search"></ion-icon>
-        <p>No cities found for "{{ searchControl.value }}"</p>
-      </div>
+      @if (noResults() && !loading()) {
+        <div class="empty-state">
+          <ion-icon name="search"></ion-icon>
+          <p>No cities found for "{{ searchQuery() }}"</p>
+        </div>
+      }
 
       <!-- Suggestions -->
-      <ion-list *ngIf="suggestions().length > 0" class="suggestions-list">
-        <ion-item
-          *ngFor="let city of suggestions()"
-          (click)="onCitySelect(city)"
-          button
-          detail="false"
-        >
-          <ion-icon name="location" slot="start"></ion-icon>
-          <ion-label>
-            <h3>{{ city.name }}</h3>
-            <p *ngIf="city.state">{{ city.state }}, {{ city.country }}</p>
-            <p *ngIf="!city.state">{{ city.country }}</p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
+      @if (suggestions().length > 0) {
+        <ion-list class="suggestions-list">
+          @for (city of suggestions(); track city.lat + ',' + city.lon) {
+            <ion-item (click)="onCitySelect(city)" button detail="false">
+              <ion-icon name="location" slot="start"></ion-icon>
+              <ion-label>
+                <h3>{{ city.name }}</h3>
+                @if (city.state) {
+                  <p>{{ city.state }}, {{ city.country }}</p>
+                } @else {
+                  <p>{{ city.country }}</p>
+                }
+              </ion-label>
+              <ion-button
+                slot="end"
+                fill="clear"
+                (click)="toggleSaveCity(city, $event)"
+                [attr.aria-label]="isCitySaved(city) ? 'Remove from favorites' : 'Save to favorites'"
+              >
+                <ion-icon
+                  slot="icon-only"
+                  [name]="isCitySaved(city) ? 'star' : 'star-outline'"
+                  [color]="isCitySaved(city) ? 'warning' : 'medium'"
+                ></ion-icon>
+              </ion-button>
+            </ion-item>
+          }
+        </ion-list>
+      }
     </div>
   </div>
 </ion-content>
