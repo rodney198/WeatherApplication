@@ -1,0 +1,14 @@
+{
+  "name": "weather-application-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WeatherNow Monorepo Root",
+  "scripts": {
+    "start": "npm --prefix WeatherNow start",
+    "serve": "npm --prefix WeatherNow start",
+    "build": "npm --prefix WeatherNow run build",
+    "test": "npm --prefix WeatherNow test -- --watch=false",
+    "lint": "npm --prefix WeatherNow run lint",
+    "cap:sync": "npm --prefix WeatherNow run cap:sync"
+  }
+}
