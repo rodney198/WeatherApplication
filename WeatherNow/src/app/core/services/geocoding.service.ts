@@ -45,6 +45,34 @@ export class GeocodingService {
   private readonly inflightRequests = new Map<string, Observable<CitySuggestion[]>>();
 
   /**
+   * Reverse geocode coordinates to obtain a friendly city/locality name.
+   */
+  reverseGeocode(lat: number, lon: number): Observable<string> {
+    if (!this.apiKey || this.apiKey === 'YOUR_API_KEY_HERE') {
+      return of(`GPS Location (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`);
+    }
+
+    const params = new HttpParams()
+      .set('lat', lat.toString())
+      .set('lon', lon.toString())
+      .set('limit', '1')
+      .set('appid', this.apiKey);
+
+    return this.http
+      .get<DirectGeocodingItem[]>('https://api.openweathermap.org/geo/1.0/reverse', { params })
+      .pipe(
+        map((results) => {
+          if (results && results.length > 0) {
+            const item = results[0];
+            return item.state ? `${item.name}, ${item.state}` : `${item.name}, ${item.country}`;
+          }
+          return `GPS Location (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`;
+        }),
+        catchError(() => of(`GPS Location (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`)),
+      );
+  }
+
+  /**
    * Search cities by name.
    */
   searchCities(options: SearchOptions): Observable<CitySuggestion[]> {

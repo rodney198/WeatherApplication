@@ -27,6 +27,7 @@ import { LocationStateService } from '../../core/services/state/location-state.s
 import { SettingsStateService } from '../../core/services/state/settings-state.service';
 import { WeatherService } from '../../core/services/weather.service';
 import { LocationService } from '../../core/services/location.service';
+import { GeocodingService } from '../../core/services/geocoding.service';
 import { getWeatherIcon } from '../../core/utils/weather-icon.util';
 import {
   TemperaturePipe,
@@ -79,6 +80,7 @@ export class HomePage implements OnInit {
   private readonly settings = inject(SettingsStateService);
   private readonly weatherService = inject(WeatherService);
   private readonly locationService = inject(LocationService);
+  private readonly geocoding = inject(GeocodingService);
 
   // Reactive state signals for robust zoneless change detection
   readonly current = toSignal(this.weatherState.current$, { initialValue: null });
@@ -136,11 +138,13 @@ export class HomePage implements OnInit {
       const hasPermission = await this.locationService.checkPermission();
       if (hasPermission) {
         const position = await this.locationService.getCurrentPositionAsync();
-        this.locationState.setCurrent(
-          position.coordinates,
-          this.locationState.snapshot.currentLocationName || 'Current Location',
-        );
-        this.fetchWeather(position.coordinates.latitude, position.coordinates.longitude);
+        this.locationService.cachePosition(position.coordinates);
+        this.geocoding
+          .reverseGeocode(position.coordinates.latitude, position.coordinates.longitude)
+          .subscribe((cityName) => {
+            this.locationState.setCurrent(position.coordinates, cityName);
+            this.fetchWeather(position.coordinates.latitude, position.coordinates.longitude);
+          });
         return;
       }
     } catch {
