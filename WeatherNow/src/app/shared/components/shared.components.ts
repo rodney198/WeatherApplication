@@ -65,13 +65,17 @@ export class LoadingSkeletonComponent {
   standalone: true,
   imports: [IonIcon],
   template: `
-    <div class="error-state" *ngIf="visible">
+    @if (visible) {
+    <div class="error-state">
       <ion-icon [name]="icon" class="error-icon"></ion-icon>
       <p class="error-message">{{ message }}</p>
-      <button class="retry-btn" *ngIf="retryLabel" (click)="retry.emit()">
+      @if (retryLabel) {
+      <button class="retry-btn" (click)="retry.emit()">
         {{ retryLabel }}
       </button>
+      }
     </div>
+    }
   `,
   styles: [
     `
@@ -112,11 +116,15 @@ export class ErrorStateComponent {
   standalone: true,
   imports: [IonIcon],
   template: `
-    <div class="empty-state" *ngIf="visible">
+    @if (visible) {
+    <div class="empty-state">
       <ion-icon [name]="icon" class="empty-icon"></ion-icon>
       <p class="empty-title">{{ title }}</p>
-      <p class="empty-message" *ngIf="message">{{ message }}</p>
+      @if (message) {
+      <p class="empty-message">{{ message }}</p>
+      }
     </div>
+    }
   `,
   styles: [
     `
