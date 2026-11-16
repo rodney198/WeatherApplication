@@ -1,13 +1,12 @@
 /**
  * WeatherNow - Root Application Component
- * Provides the app shell with router outlet.
+ * Provides the app shell and initializes native Capacitor plugins on startup.
  */
 
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, OnInit } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular';
 
-import { SettingsStateService } from './core/services/state/settings-state.service';
+import { NativeService } from './core/services/native.service';
 
 @Component({
   selector: 'app-root',
@@ -16,11 +15,11 @@ import { SettingsStateService } from './core/services/state/settings-state.servi
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
-  private readonly settings = inject(SettingsStateService);
-  private readonly router = inject(Router);
+export class AppComponent implements OnInit {
+  private readonly nativeService = inject(NativeService);
 
-  readonly temperatureUnit = this.settings.snapshot.temperatureUnit;
-
-  constructor() {}
+  async ngOnInit(): Promise<void> {
+    await this.nativeService.initializeStatusBar();
+    await this.nativeService.hideSplashScreen();
+  }
 }

@@ -97,3 +97,4 @@ describe('LocationStateService', () => {
     expect(updated?.isCurrent).toBe(true);
   });
 });
+

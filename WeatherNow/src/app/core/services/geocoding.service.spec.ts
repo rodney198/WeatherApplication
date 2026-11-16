@@ -96,3 +96,4 @@ describe('GeocodingService', () => {
     expect(result).toBe('Tokyo, JP');
   });
 });
+

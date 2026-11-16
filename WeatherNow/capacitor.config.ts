@@ -30,6 +30,14 @@ const config: CapacitorConfig = {
       // Use shared preferences for Android
       sharedPreferencesName: 'WeatherNowPreferences',
     },
+    SplashScreen: {
+      launchShowDuration: 1500,
+      launchAutoHide: true,
+      backgroundColor: '#667eea',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+    },
   },
 };
 

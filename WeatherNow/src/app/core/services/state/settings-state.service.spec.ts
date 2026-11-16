@@ -60,3 +60,4 @@ describe('SettingsStateService', () => {
     expect(mockStorage.set).toHaveBeenCalled();
   });
 });
+
