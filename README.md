@@ -281,15 +281,6 @@ npm test -- --watch=false
 
 ---
 
-## Git Branching & Commit Strategy
-
-WeatherNow maintains a strict professional Git workflow:
-- `main`: Represents the stable, production-ready baseline. Direct commits are restricted.
-- `development`: Active feature development branch where all features, tests, and improvements are integrated.
-- **Commit Strategy**: Semantic commits (`feat:`, `fix:`, `chore:`, `test:`, `docs:`) tracking one discrete logical change per commit.
-
----
-
 ## License
 
 This project is licensed under the MIT License.
