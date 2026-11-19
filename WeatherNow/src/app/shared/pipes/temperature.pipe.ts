@@ -36,11 +36,19 @@ export class WindDirectionPipe implements PipeTransform {
   standalone: true,
 })
 export class DateTimePipe implements PipeTransform {
-  transform(timestamp: number | null | undefined, format: 'short' | 'time' | 'date' = 'short'): string {
+  transform(
+    timestamp: number | null | undefined,
+    format: 'short' | 'time' | 'date' | 'day' = 'short',
+  ): string {
     if (!timestamp) return '--';
     const date = new Date(timestamp * 1000);
     if (format === 'time') return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     if (format === 'date') return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    if (format === 'day') {
+      const now = new Date();
+      if (date.toDateString() === now.toDateString()) return 'Today';
+      return date.toLocaleDateString([], { weekday: 'short' });
+    }
     return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 }

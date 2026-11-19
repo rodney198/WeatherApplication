@@ -1,20 +1,25 @@
 <ion-header class="ion-no-border">
   <ion-toolbar class="home-toolbar">
-    <ion-title class="app-title">WeatherNow</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="refreshWeather()" aria-label="Refresh weather">
-        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
-      </ion-button>
-      <ion-button routerLink="/search" aria-label="Search city">
-        <ion-icon slot="icon-only" name="search-outline"></ion-icon>
-      </ion-button>
-      <ion-button routerLink="/saved-locations" aria-label="Saved locations">
-        <ion-icon slot="icon-only" name="bookmark-outline"></ion-icon>
-      </ion-button>
-      <ion-button routerLink="/settings" aria-label="Settings">
-        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
+    <div class="toolbar-content">
+      <div class="app-brand">
+        <ion-icon name="cloudy" class="brand-icon"></ion-icon>
+        <span class="app-title">WeatherNow</span>
+      </div>
+      <ion-buttons slot="end" class="toolbar-actions">
+        <ion-button (click)="refreshWeather()" aria-label="Refresh weather" class="icon-btn">
+          <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+        </ion-button>
+        <ion-button routerLink="/search" aria-label="Search city" class="icon-btn">
+          <ion-icon slot="icon-only" name="search-outline"></ion-icon>
+        </ion-button>
+        <ion-button routerLink="/saved-locations" aria-label="Saved locations" class="icon-btn">
+          <ion-icon slot="icon-only" name="bookmark-outline"></ion-icon>
+        </ion-button>
+        <ion-button routerLink="/settings" aria-label="Settings" class="icon-btn">
+          <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </div>
   </ion-toolbar>
 </ion-header>
 
@@ -23,173 +28,226 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- Loading State -->
-  @if (loading() && !hasData()) {
-    <div class="loading-container">
-      <ion-spinner name="crescent" class="spinner"></ion-spinner>
-      <p class="loading-text">Loading weather...</p>
-    </div>
-  }
-
-  <!-- Error State -->
-  @if (!loading() && errorMessage()) {
-    <app-error-state
-      [message]="errorMessage() || 'Failed to load weather'"
-      icon="alert-circle"
-      retryLabel="Retry"
-      (retry)="refreshWeather()"
-    ></app-error-state>
-    <div class="demo-fallback-prompt">
-      <ion-button fill="outline" size="small" (click)="loadDemoWeather()">
-        Explore with Demo Data
-      </ion-button>
-    </div>
-  }
-
-  <!-- Weather Dashboard -->
-  @if (current(); as cur) {
-    <div class="dashboard">
-      <!-- Location Header with Quick Save/Bookmark -->
-      <div class="location-header">
-        <div class="location-info">
-          <ion-icon name="location" class="location-icon"></ion-icon>
-          <h2 class="location-name">{{ currentLocationName() }}</h2>
-        </div>
-        <ion-button
-          fill="clear"
-          size="small"
-          class="favorite-toggle"
-          (click)="toggleSaveLocation()"
-          [attr.aria-label]="isSavedLocation() ? 'Remove from favorites' : 'Save to favorites'"
-        >
-          <ion-icon
-            slot="icon-only"
-            [name]="isSavedLocation() ? 'star' : 'star-outline'"
-            [color]="isSavedLocation() ? 'warning' : 'medium'"
-          ></ion-icon>
-        </ion-button>
+  <div class="app-shell">
+    <!-- Loading State -->
+    @if (loading() && !hasData()) {
+      <div class="loading-container">
+        <ion-spinner name="crescent" class="spinner"></ion-spinner>
+        <p class="loading-text">Updating weather forecast...</p>
       </div>
+    }
 
-      <!-- Current Weather Card -->
-      <div class="current-weather-card">
-        <div class="weather-main">
-          <app-weather-icon
-            [icon]="getIcon(cur.weather[0]?.icon || '01d')"
-            size="large"
-          ></app-weather-icon>
-          <div class="temp-display">
-            <span class="temperature">{{ cur.temp | temperature: temperatureUnit() }}</span>
-            <span class="condition">{{ cur.weather[0]?.description | titlecase }}</span>
+    <!-- Error State -->
+    @if (!loading() && errorMessage()) {
+      <div class="error-wrapper">
+        <app-error-state
+          [message]="errorMessage() || 'Failed to load weather'"
+          icon="alert-circle"
+          retryLabel="Retry"
+          (retry)="refreshWeather()"
+        ></app-error-state>
+        <div class="demo-fallback-prompt">
+          <ion-button fill="outline" size="small" (click)="loadDemoWeather()">
+            Explore with Demo Data
+          </ion-button>
+        </div>
+      </div>
+    }
+
+    <!-- Weather Dashboard -->
+    @if (current(); as cur) {
+      <div class="dashboard">
+        <!-- Location Header Bar -->
+        <div class="location-header-bar">
+          <div class="location-info">
+            <div class="location-badge">
+              <ion-icon name="location" class="location-icon"></ion-icon>
+            </div>
+            <div class="location-text">
+              <h1 class="location-name">{{ currentLocationName() }}</h1>
+              <span class="location-date">{{ cur.dt | dateTime: 'short' }}</span>
+            </div>
           </div>
+          <button
+            class="favorite-circle-btn"
+            (click)="toggleSaveLocation()"
+            [class.is-favorite]="isSavedLocation()"
+            [attr.aria-label]="isSavedLocation() ? 'Remove from favorites' : 'Save to favorites'"
+          >
+            <ion-icon [name]="isSavedLocation() ? 'star' : 'star-outline'"></ion-icon>
+          </button>
         </div>
 
-        <div class="weather-details">
-          <div class="detail-item">
-            <span class="detail-label">Feels like</span>
-            <span class="detail-value">{{ cur.feels_like | temperature: temperatureUnit() }}</span>
+        <!-- Current Weather Hero Card -->
+        <div class="hero-weather-card">
+          <div class="hero-visual">
+            <app-weather-icon
+              [icon]="getIcon(cur.weather[0]?.icon || '01d')"
+              size="hero"
+            ></app-weather-icon>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">High</span>
-            <span class="detail-value">{{ getTempHigh(cur) | temperature: temperatureUnit() }}</span>
+          <div class="hero-temp-block">
+            <span class="hero-temp">{{ cur.temp | temperature: temperatureUnit() }}</span>
+            <span class="hero-condition">{{ cur.weather[0]?.description | titlecase }}</span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Low</span>
-            <span class="detail-value">{{ getTempLow(cur) | temperature: temperatureUnit() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Humidity</span>
-            <span class="detail-value">{{ cur.humidity }}%</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Wind</span>
-            <span class="detail-value">
-              {{ cur.wind_speed | windSpeed: temperatureUnit() }} {{ cur.wind_deg | windDirection }}
+          <div class="hero-pills">
+            <span class="hero-pill">
+              H: {{ getTempHigh(cur) | temperature: temperatureUnit() }} &nbsp;&bull;&nbsp; L: {{ getTempLow(cur) | temperature: temperatureUnit() }}
+            </span>
+            <span class="hero-pill">
+              Feels like {{ cur.feels_like | temperature: temperatureUnit() }}
             </span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Pressure</span>
-            <span class="detail-value">{{ cur.pressure | pressure }}</span>
+        </div>
+
+        <!-- Weather Metrics Grid (2x3) -->
+        <div class="metrics-grid">
+          <!-- Wind -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <ion-icon name="navigate-outline" class="metric-icon wind"></ion-icon>
+              <span class="metric-title">WIND</span>
+            </div>
+            <div class="metric-value">
+              {{ cur.wind_speed | windSpeed: temperatureUnit() }}
+            </div>
+            <div class="metric-sub">
+              {{ cur.wind_deg | windDirection }}
+            </div>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Visibility</span>
-            <span class="detail-value">{{ cur.visibility | visibility }}</span>
+
+          <!-- Humidity -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <ion-icon name="water-outline" class="metric-icon humidity"></ion-icon>
+              <span class="metric-title">HUMIDITY</span>
+            </div>
+            <div class="metric-value">{{ cur.humidity }}%</div>
+            <div class="metric-sub">
+              {{ cur.humidity > 65 ? 'High moisture' : (cur.humidity < 30 ? 'Dry air' : 'Comfortable') }}
+            </div>
+          </div>
+
+          <!-- Visibility -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <ion-icon name="eye-outline" class="metric-icon visibility"></ion-icon>
+              <span class="metric-title">VISIBILITY</span>
+            </div>
+            <div class="metric-value">{{ cur.visibility | visibility }}</div>
+            <div class="metric-sub">
+              {{ (cur.visibility || 0) >= 10000 ? 'Clear view' : 'Moderate haze' }}
+            </div>
+          </div>
+
+          <!-- Pressure -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <ion-icon name="speedometer-outline" class="metric-icon pressure"></ion-icon>
+              <span class="metric-title">PRESSURE</span>
+            </div>
+            <div class="metric-value">{{ cur.pressure | pressure }}</div>
+            <div class="metric-sub">
+              {{ cur.pressure >= 1013 ? 'High pressure' : 'Low pressure' }}
+            </div>
+          </div>
+
+          <!-- Sunrise -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <ion-icon name="sunny-outline" class="metric-icon sunrise"></ion-icon>
+              <span class="metric-title">SUNRISE</span>
+            </div>
+            <div class="metric-value">{{ cur.sunrise | dateTime: 'time' }}</div>
+            <div class="metric-sub">Dawn</div>
+          </div>
+
+          <!-- Sunset -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <ion-icon name="moon-outline" class="metric-icon sunset"></ion-icon>
+              <span class="metric-title">SUNSET</span>
+            </div>
+            <div class="metric-value">{{ cur.sunset | dateTime: 'time' }}</div>
+            <div class="metric-sub">Dusk</div>
           </div>
         </div>
 
-        <!-- Sunrise / Sunset -->
-        <div class="sun-times">
-          <div class="sun-item">
-            <ion-icon name="sunny" class="sun-icon"></ion-icon>
-            <span>Sunrise {{ cur.sunrise | dateTime: 'time' }}</span>
-          </div>
-          <div class="sun-item">
-            <ion-icon name="moon" class="moon-icon"></ion-icon>
-            <span>Sunset {{ cur.sunset | dateTime: 'time' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Hourly Forecast -->
-      @if (next24Hours().length > 0) {
-        <div class="forecast-section">
-          <h3 class="section-title">Hourly Forecast</h3>
-          <div class="hourly-scroll">
-            @for (hour of next24Hours(); track hour.dt) {
-              <div class="hourly-item">
-                <span class="hour-time">{{ hour.dt | dateTime: 'time' }}</span>
-                <app-weather-icon
-                  [icon]="getIcon(hour.weather[0]?.icon || '01d')"
-                  size="small"
-                ></app-weather-icon>
-                <span class="hour-temp">{{ hour.temp | temperature: temperatureUnit() }}</span>
-                @if (hour.pop && hour.pop > 0) {
-                  <span class="hour-pop">
-                    <ion-icon name="rainy" class="pop-icon"></ion-icon>
-                    {{ hour.pop | percent: '1.0-0' }}
-                  </span>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Weekly Forecast -->
-      @if (next7Days().length > 0) {
-        <div class="forecast-section">
-          <h3 class="section-title">7-Day Forecast</h3>
-          <div class="weekly-list">
-            @for (day of next7Days(); track day.dt) {
-              <div class="weekly-item">
-                <span class="day-name">{{ day.dt | dateTime: 'date' }}</span>
-                <app-weather-icon
-                  [icon]="getIcon(day.weather[0]?.icon || '01d')"
-                  size="small"
-                ></app-weather-icon>
-                <div class="weekly-temps">
-                  <span class="weekly-high">{{ day.temp.max | temperature: temperatureUnit() }}</span>
-                  <span class="weekly-low">{{ day.temp.min | temperature: temperatureUnit() }}</span>
+        <!-- 24-Hour Forecast -->
+        @if (next24Hours().length > 0) {
+          <div class="forecast-section">
+            <div class="section-header">
+              <ion-icon name="time-outline" class="section-icon"></ion-icon>
+              <h2 class="section-title">24-HOUR FORECAST</h2>
+            </div>
+            <div class="hourly-scroll">
+              @for (hour of next24Hours(); track hour.dt; let first = $first) {
+                <div class="hourly-pill" [class.current-hour]="first">
+                  <span class="hour-time">{{ first ? 'Now' : (hour.dt | dateTime: 'time') }}</span>
+                  <app-weather-icon
+                    [icon]="getIcon(hour.weather[0]?.icon || '01d')"
+                    size="small"
+                  ></app-weather-icon>
+                  <span class="hour-temp">{{ hour.temp | temperature: temperatureUnit() }}</span>
+                  @if (hour.pop && hour.pop > 0) {
+                    <span class="hour-pop">
+                      <ion-icon name="water" class="pop-icon"></ion-icon>
+                      {{ hour.pop | percent: '1.0-0' }}
+                    </span>
+                  }
                 </div>
-                @if (day.pop && day.pop > 0) {
-                  <span class="weekly-pop">
-                    <ion-icon name="rainy" class="pop-icon"></ion-icon>
-                    {{ day.pop | percent: '1.0-0' }}
-                  </span>
-                }
-              </div>
-            }
+              }
+            </div>
           </div>
-        </div>
-      }
-    </div>
-  }
+        }
 
-  <!-- Empty State -->
-  @if (!loading() && !errorMessage() && !current()) {
-    <app-empty-state
-      title="No weather data"
-      message="Pull down to refresh or search for a city"
-      icon="cloud-outline"
-    ></app-empty-state>
-  }
+        <!-- 7-Day Forecast -->
+        @if (next7Days().length > 0) {
+          <div class="forecast-section">
+            <div class="section-header">
+              <ion-icon name="calendar-outline" class="section-icon"></ion-icon>
+              <h2 class="section-title">7-DAY FORECAST</h2>
+            </div>
+            <div class="weekly-list">
+              @for (day of next7Days(); track day.dt; let first = $first) {
+                <div class="weekly-row">
+                  <span class="day-name">{{ first ? 'Today' : (day.dt | dateTime: 'day') }}</span>
+                  <div class="day-icon-block">
+                    <app-weather-icon
+                      [icon]="getIcon(day.weather[0]?.icon || '01d')"
+                      size="small"
+                    ></app-weather-icon>
+                    @if (day.pop && day.pop > 0) {
+                      <span class="day-pop-badge">
+                        <ion-icon name="water" class="pop-icon"></ion-icon>
+                        {{ day.pop | percent: '1.0-0' }}
+                      </span>
+                    }
+                  </div>
+                  <span class="day-min-temp">{{ day.temp.min | temperature: temperatureUnit() }}</span>
+                  <div class="temp-bar-track">
+                    <div
+                      class="temp-bar-fill"
+                      [style.left]="getTempBarRange(day.temp.min, day.temp.max).left"
+                      [style.width]="getTempBarRange(day.temp.min, day.temp.max).width"
+                    ></div>
+                  </div>
+                  <span class="day-max-temp">{{ day.temp.max | temperature: temperatureUnit() }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (!loading() && !errorMessage() && !current()) {
+      <app-empty-state
+        title="No weather data"
+        message="Pull down to refresh or search for a city"
+        icon="cloud-outline"
+      ></app-empty-state>
+    }
+  </div>
 </ion-content>

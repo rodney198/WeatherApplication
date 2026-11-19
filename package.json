@@ -12,3 +12,4 @@
     "cap:sync": "npm --prefix WeatherNow run cap:sync"
   }
 }
+

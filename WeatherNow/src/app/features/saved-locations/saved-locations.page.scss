@@ -1,38 +1,79 @@
+ion-toolbar {
+  --background: #1e3a8a;
+  --color: #ffffff;
+  --border-width: 0;
+
+  ion-title {
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.3px;
+    color: #ffffff;
+  }
+
+  ion-back-button,
+  ion-button {
+    --color: #ffffff;
+  }
+}
+
+ion-content {
+  --background: linear-gradient(175deg, #1e3a8a 0%, #1e40af 25%, #2563eb 55%, #3b82f6 85%, #60a5fa 100%);
+}
+
 .saved-locations-container {
+  max-width: 580px;
+  margin: 0 auto;
+  width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
+  min-height: 100%;
 }
 
 .locations-list {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
   margin: 0;
-  overflow: hidden;
+  padding: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .locations-list ion-item {
   --background: transparent;
-  --color: #333;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
+  --color: #ffffff;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-radius: 14px;
+  margin-bottom: 4px;
 
-.locations-list ion-item:last-child {
-  border-bottom: none;
-}
+  &:last-child {
+    --border-width: 0;
+    margin-bottom: 0;
+  }
 
-.locations-list ion-item.current {
-  background: rgba(56, 128, 255, 0.1);
-}
+  &.current {
+    background: rgba(56, 189, 248, 0.18);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+  }
 
-.locations-list ion-item h3 {
-  color: #333;
-  font-size: 16px;
-}
+  ion-icon[slot="start"] {
+    color: #38bdf8;
+    font-size: 20px;
+    margin-right: 12px;
+  }
 
-.locations-list ion-item p {
-  color: #666;
-  font-size: 14px;
+  h3 {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 2px 0;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+    margin: 0;
+  }
 }
 
 .empty-state {
@@ -40,13 +81,36 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 50vh;
-  color: rgba(255, 255, 255, 0.7);
+  padding: 64px 20px;
+  color: #ffffff;
   text-align: center;
-  gap: 8px;
-}
+  gap: 12px;
 
-.empty-state ion-icon {
-  font-size: 64px;
-  opacity: 0.5;
+  .empty-icon {
+    font-size: 56px;
+    opacity: 0.6;
+    color: #38bdf8;
+    margin-bottom: 4px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  p {
+    font-size: 14px;
+    opacity: 0.8;
+    margin: 0;
+    max-width: 280px;
+    line-height: 1.4;
+  }
+
+  .search-btn {
+    margin-top: 16px;
+    --color: #ffffff;
+    --border-color: rgba(255, 255, 255, 0.6);
+    --border-radius: 20px;
+  }
 }

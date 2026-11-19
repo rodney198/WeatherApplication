@@ -13,7 +13,6 @@ import { PercentPipe, TitleCasePipe } from '@angular/common';
 import {
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonButtons,
   IonButton,
   IonContent,
@@ -52,7 +51,6 @@ import { CurrentWeather } from '../../core/models/weather.model';
     RouterLink,
     IonHeader,
     IonToolbar,
-    IonTitle,
     IonButtons,
     IonButton,
     IonContent,
@@ -118,6 +116,35 @@ export class HomePage implements OnInit {
 
   // Display-ready daily forecast (7 days)
   readonly next7Days = computed(() => this.daily().slice(0, 7));
+
+  // Weekly temperature extremes for proportional daily forecast range bars
+  readonly weekMinTemp = computed(() => {
+    const days = this.daily();
+    if (!days.length) return 0;
+    return Math.min(...days.map((d) => d.temp.min));
+  });
+
+  readonly weekMaxTemp = computed(() => {
+    const days = this.daily();
+    if (!days.length) return 100;
+    return Math.max(...days.map((d) => d.temp.max));
+  });
+
+  /**
+   * Calculates the proportional position and width of the temperature range bar for a day
+   */
+  getTempBarRange(min: number, max: number): { left: string; width: string } {
+    const overallMin = this.weekMinTemp();
+    const overallMax = this.weekMaxTemp();
+    const diff = overallMax - overallMin || 1;
+    const left = Math.max(0, Math.min(100, ((min - overallMin) / diff) * 100));
+    const right = Math.max(0, Math.min(100, ((max - overallMin) / diff) * 100));
+    const width = Math.max(14, right - left);
+    return {
+      left: `${left.toFixed(1)}%`,
+      width: `${width.toFixed(1)}%`,
+    };
+  }
 
   ngOnInit(): void {
     this.initializeWeather();

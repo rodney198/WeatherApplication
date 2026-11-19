@@ -114,6 +114,12 @@ describe('Shared Formatting Pipes', () => {
       expect(result).not.toBe('--');
     });
 
+    it('should format timestamp to day string', () => {
+      const result = pipe.transform(timestamp, 'day');
+      expect(result).not.toBe('--');
+      expect(typeof result).toBe('string');
+    });
+
     it('should return -- for falsy timestamp', () => {
       expect(pipe.transform(0)).toBe('--');
       expect(pipe.transform(null)).toBe('--');

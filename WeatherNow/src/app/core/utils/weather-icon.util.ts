@@ -1,9 +1,7 @@
 /**
  * WeatherNow - Weather Icon Utility
- * Maps OpenWeatherMap icon codes to Ionicons for consistent UI.
+ * Maps OpenWeatherMap icon codes to registered Ionicons for consistent UI.
  */
-
-import { environment } from '../../../environments/environment';
 
 export interface IconMap {
   [key: string]: string;
@@ -13,7 +11,7 @@ export const WEATHER_ICONS: IconMap = {
   '01d': 'sunny',
   '01n': 'moon',
   '02d': 'partly-sunny',
-  '02n': 'partly-cloudy-night',
+  '02n': 'cloudy-night',
   '03d': 'cloudy',
   '03n': 'cloudy',
   '04d': 'cloudy',
@@ -26,8 +24,8 @@ export const WEATHER_ICONS: IconMap = {
   '11n': 'thunderstorm',
   '13d': 'snow',
   '13n': 'snow',
-  '50d': 'mist',
-  '50n': 'mist',
+  '50d': 'water',
+  '50n': 'water',
 };
 
 export function getWeatherIcon(iconCode: string): string {
