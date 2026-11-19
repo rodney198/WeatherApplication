@@ -1,5 +1,5 @@
 ion-toolbar {
-  --background: #1e3a8a;
+  --background: #0b131e;
   --color: #ffffff;
   --border-width: 0;
 
@@ -17,11 +17,12 @@ ion-toolbar {
 }
 
 ion-content {
-  --background: linear-gradient(175deg, #1e3a8a 0%, #1e40af 25%, #2563eb 55%, #3b82f6 85%, #60a5fa 100%);
+  --background: #0b131e;
+  --color: #ffffff;
 }
 
 .saved-locations-container {
-  max-width: 580px;
+  max-width: 640px;
   margin: 0 auto;
   width: 100%;
   padding: 16px;
@@ -29,20 +30,16 @@ ion-content {
 }
 
 .locations-list {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #202b3b;
   border-radius: 20px;
   margin: 0;
-  padding: 6px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 8px;
 }
 
 .locations-list ion-item {
   --background: transparent;
   --color: #ffffff;
-  --border-color: rgba(255, 255, 255, 0.1);
+  --border-color: rgba(255, 255, 255, 0.06);
   --border-radius: 14px;
   margin-bottom: 4px;
 
@@ -52,12 +49,12 @@ ion-content {
   }
 
   &.current {
-    background: rgba(56, 189, 248, 0.18);
-    border: 1px solid rgba(56, 189, 248, 0.35);
+    background: rgba(0, 149, 255, 0.15);
+    border: 1px solid rgba(0, 149, 255, 0.3);
   }
 
   ion-icon[slot="start"] {
-    color: #38bdf8;
+    color: #0095ff;
     font-size: 20px;
     margin-right: 12px;
   }
@@ -70,7 +67,7 @@ ion-content {
   }
 
   p {
-    color: rgba(255, 255, 255, 0.75);
+    color: #939eaf;
     font-size: 13px;
     margin: 0;
   }
@@ -89,7 +86,7 @@ ion-content {
   .empty-icon {
     font-size: 56px;
     opacity: 0.6;
-    color: #38bdf8;
+    color: #0095ff;
     margin-bottom: 4px;
   }
 
@@ -101,7 +98,7 @@ ion-content {
 
   p {
     font-size: 14px;
-    opacity: 0.8;
+    color: #939eaf;
     margin: 0;
     max-width: 280px;
     line-height: 1.4;
@@ -110,7 +107,7 @@ ion-content {
   .search-btn {
     margin-top: 16px;
     --color: #ffffff;
-    --border-color: rgba(255, 255, 255, 0.6);
+    --background: #0095ff;
     --border-radius: 20px;
   }
 }

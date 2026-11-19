@@ -4,17 +4,12 @@
  * Built with Angular standalone components and reactive signals for zoneless change detection.
  */
 
-import { Component, inject, computed, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, computed, signal, OnInit, DestroyRef } from '@angular/core';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { distinctUntilChanged, skip } from 'rxjs/operators';
-import { PercentPipe, TitleCasePipe } from '@angular/common';
 
 import {
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonButton,
   IonContent,
   IonSpinner,
   IonRefresher,
@@ -31,7 +26,6 @@ import { GeocodingService } from '../../core/services/geocoding.service';
 import { getWeatherIcon } from '../../core/utils/weather-icon.util';
 import {
   TemperaturePipe,
-  WindDirectionPipe,
   WindSpeedPipe,
   DateTimePipe,
   PressurePipe,
@@ -41,6 +35,7 @@ import {
   ErrorStateComponent,
   EmptyStateComponent,
   WeatherIconComponent,
+  AppNavComponent,
 } from '../../shared/components/shared.components';
 import { CurrentWeather } from '../../core/models/weather.model';
 
@@ -48,20 +43,12 @@ import { CurrentWeather } from '../../core/models/weather.model';
   selector: 'app-home',
   standalone: true,
   imports: [
-    RouterLink,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonButton,
     IonContent,
     IonSpinner,
     IonRefresher,
     IonRefresherContent,
     IonIcon,
-    PercentPipe,
-    TitleCasePipe,
     TemperaturePipe,
-    WindDirectionPipe,
     WindSpeedPipe,
     DateTimePipe,
     PressurePipe,
@@ -69,11 +56,13 @@ import { CurrentWeather } from '../../core/models/weather.model';
     ErrorStateComponent,
     EmptyStateComponent,
     WeatherIconComponent,
+    AppNavComponent,
   ],
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  private readonly router = inject(Router);
   private readonly weatherState = inject(WeatherStateService);
   private readonly locationState = inject(LocationStateService);
   private readonly settings = inject(SettingsStateService);
@@ -81,6 +70,9 @@ export class HomePage implements OnInit {
   private readonly locationService = inject(LocationService);
   private readonly geocoding = inject(GeocodingService);
   private readonly destroyRef = inject(DestroyRef);
+
+  // Toggle for expanded air conditions
+  readonly showMoreConditions = signal(false);
 
   // Reactive state signals for robust zoneless change detection
   readonly current = toSignal(this.weatherState.current$, { initialValue: null });
@@ -113,6 +105,26 @@ export class HomePage implements OnInit {
 
   // Display-ready hourly forecast (first 24 hours)
   readonly next24Hours = computed(() => this.hourly().slice(0, 24));
+
+  // 6 key hourly intervals for "Today's Forecast"
+  readonly todayForecast = computed(() => {
+    const hours = this.hourly();
+    if (hours.length <= 6) return hours;
+    return hours.slice(0, 6);
+  });
+
+  // Chance of rain percentage for hero display
+  readonly chanceOfRain = computed(() => {
+    const firstHour = this.hourly()[0];
+    if (firstHour?.pop !== undefined && firstHour.pop !== null) {
+      return Math.round(firstHour.pop * 100);
+    }
+    const today = this.daily()[0];
+    if (today?.pop !== undefined && today.pop !== null) {
+      return Math.round(today.pop * 100);
+    }
+    return 0;
+  });
 
   // Display-ready daily forecast (7 days)
   readonly next7Days = computed(() => this.daily().slice(0, 7));
@@ -314,6 +326,41 @@ export class HomePage implements OnInit {
    */
   getIcon(code: string): string {
     return getWeatherIcon(code);
+  }
+
+  /**
+   * Formats high and low temperatures as 'High/Low' (e.g. 36/22)
+   */
+  formatHighLow(max: number, min: number): string {
+    return `${Math.round(max)}/${Math.round(min)}`;
+  }
+
+  /**
+   * Extracts clean weather condition name (e.g. Sunny, Cloudy, Rainy, Storm)
+   */
+  getConditionTitle(description: string | undefined): string {
+    if (!description) return 'Sunny';
+    const desc = description.toLowerCase();
+    if (desc.includes('clear')) return 'Sunny';
+    if (desc.includes('thunder') || desc.includes('storm')) return 'Storm';
+    if (desc.includes('rain') || desc.includes('drizzle')) return 'Rainy';
+    if (desc.includes('snow')) return 'Snow';
+    if (desc.includes('cloud')) return 'Cloudy';
+    return description.charAt(0).toUpperCase() + description.slice(1);
+  }
+
+  /**
+   * Toggle expanded air conditions
+   */
+  toggleAirConditions(): void {
+    this.showMoreConditions.update((v) => !v);
+  }
+
+  /**
+   * Navigate to search page
+   */
+  onSearchClick(): void {
+    this.router.navigate(['/search']);
   }
 
   /**
