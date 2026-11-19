@@ -4,9 +4,9 @@
  * Custom SVG weather illustrations inspired by modern dark dashboard design.
  */
 
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 
 @Component({
@@ -279,13 +279,13 @@ export class WeatherIconComponent {
     <!-- Desktop Left Sidebar Rail -->
     <aside class="desktop-sidebar">
       <div class="sidebar-top">
-        <div class="logo-box" routerLink="/home" aria-label="WeatherNow home">
+        <div class="logo-box" (click)="onWeatherClick()" aria-label="WeatherNow home">
           <ion-icon name="cloudy" class="logo-icon"></ion-icon>
         </div>
       </div>
 
       <nav class="sidebar-nav">
-        <a routerLink="/home" class="nav-btn" [class.active]="activeTab === 'weather'" aria-label="Weather">
+        <a (click)="onWeatherClick()" class="nav-btn" [class.active]="activeTab === 'weather'" role="button" tabindex="0" aria-label="Weather">
           <ion-icon name="rainy-outline" class="nav-icon"></ion-icon>
           <span class="nav-label">Weather</span>
         </a>
@@ -306,7 +306,7 @@ export class WeatherIconComponent {
 
     <!-- Mobile Bottom Navigation Bar -->
     <nav class="mobile-bottom-nav">
-      <a routerLink="/home" class="bottom-tab" [class.active]="activeTab === 'weather'">
+      <a (click)="onWeatherClick()" class="bottom-tab" [class.active]="activeTab === 'weather'" role="button" tabindex="0">
         <ion-icon name="rainy-outline"></ion-icon>
         <span>Weather</span>
       </a>
@@ -443,7 +443,18 @@ export class WeatherIconComponent {
   ],
 })
 export class AppNavComponent {
+  private readonly router = inject(Router);
+
   @Input() activeTab: 'weather' | 'cities' | 'saved' | 'settings' = 'weather';
+  @Output() weatherClick = new EventEmitter<void>();
+
+  onWeatherClick(): void {
+    if (this.activeTab === 'weather') {
+      this.weatherClick.emit();
+    } else {
+      this.router.navigate(['/home']);
+    }
+  }
 }
 
 @Component({

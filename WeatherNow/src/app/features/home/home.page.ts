@@ -12,8 +12,6 @@ import { distinctUntilChanged, skip } from 'rxjs/operators';
 import {
   IonContent,
   IonSpinner,
-  IonRefresher,
-  IonRefresherContent,
   IonIcon,
 } from '@ionic/angular';
 
@@ -22,7 +20,7 @@ import { LocationStateService } from '../../core/services/state/location-state.s
 import { SettingsStateService } from '../../core/services/state/settings-state.service';
 import { WeatherService } from '../../core/services/weather.service';
 import { LocationService } from '../../core/services/location.service';
-import { GeocodingService } from '../../core/services/geocoding.service';
+import { GeocodingService, CitySuggestion } from '../../core/services/geocoding.service';
 import { getWeatherIcon } from '../../core/utils/weather-icon.util';
 import {
   TemperaturePipe,
@@ -45,8 +43,6 @@ import { CurrentWeather } from '../../core/models/weather.model';
   imports: [
     IonContent,
     IonSpinner,
-    IonRefresher,
-    IonRefresherContent,
     IonIcon,
     TemperaturePipe,
     WindSpeedPipe,
@@ -73,6 +69,11 @@ export class HomePage implements OnInit {
 
   // Toggle for expanded air conditions
   readonly showMoreConditions = signal(false);
+
+  // Live in-dashboard search signals
+  readonly homeSearchQuery = signal('');
+  readonly homeSearchResults = signal<CitySuggestion[]>([]);
+  readonly isSearchFocused = signal(false);
 
   // Reactive state signals for robust zoneless change detection
   readonly current = toSignal(this.weatherState.current$, { initialValue: null });
@@ -196,9 +197,14 @@ export class HomePage implements OnInit {
         this.locationService.cachePosition(position.coordinates);
         this.geocoding
           .reverseGeocode(position.coordinates.latitude, position.coordinates.longitude)
-          .subscribe((cityName) => {
-            this.locationState.setCurrent(position.coordinates, cityName);
-            this.fetchWeather(position.coordinates.latitude, position.coordinates.longitude);
+          .subscribe({
+            next: (cityName) => {
+              this.locationState.setCurrent(position.coordinates, cityName);
+              this.fetchWeather(position.coordinates.latitude, position.coordinates.longitude);
+            },
+            error: () => {
+              this.fetchWeather(position.coordinates.latitude, position.coordinates.longitude);
+            },
           });
         return;
       }
@@ -219,7 +225,7 @@ export class HomePage implements OnInit {
   }
 
   /**
-   * Manual refresh trigger from header or pull-to-refresh
+   * Manual refresh trigger from header, nav or pull-to-refresh
    */
   async refreshWeather(): Promise<void> {
     const coords = this.locationState.snapshot.current;
@@ -243,16 +249,19 @@ export class HomePage implements OnInit {
       this.temperatureUnit(),
     );
     this.weatherState.setWeather(demo);
+    this.weatherState.setLoading(false);
   }
 
   /**
    * Handle pull-to-refresh
    */
-  async onRefresh(event: { target: HTMLIonRefresherElement }): Promise<void> {
+  async onRefresh(event?: any): Promise<void> {
     try {
       await this.refreshWeather();
     } finally {
-      event.target.complete();
+      if (event?.target?.complete) {
+        event.target.complete();
+      }
     }
   }
 
@@ -294,9 +303,11 @@ export class HomePage implements OnInit {
       .subscribe({
         next: (data) => {
           this.weatherState.setWeather(data);
+          this.weatherState.setLoading(false);
         },
         error: (err) => {
           this.weatherState.setError(err?.message || 'Failed to fetch weather data');
+          this.weatherState.setLoading(false);
         },
       });
   }
@@ -311,10 +322,12 @@ export class HomePage implements OnInit {
         .subscribe({
           next: (data) => {
             this.weatherState.setWeather(data);
+            this.weatherState.setLoading(false);
             resolve();
           },
           error: (err) => {
             this.weatherState.setError(err?.message || 'Failed to fetch weather data');
+            this.weatherState.setLoading(false);
             resolve();
           },
         });
@@ -375,5 +388,101 @@ export class HomePage implements OnInit {
    */
   getTempLow(current: CurrentWeather): number {
     return current.temp_min ?? current.temp;
+  }
+
+  /**
+   * Handle user typing in the top search bar for instant auto-complete
+   */
+  onHomeSearchInput(event: Event): void {
+    const val = (event.target as HTMLInputElement)?.value || '';
+    this.homeSearchQuery.set(val);
+    this.isSearchFocused.set(true);
+
+    if (val.trim().length >= 2) {
+      this.geocoding.searchCities({ query: val.trim(), limit: 6 }).subscribe((results) => {
+        this.homeSearchResults.set(results);
+      });
+    } else {
+      this.homeSearchResults.set([]);
+    }
+  }
+
+  /**
+   * Select a city directly from the search dropdown
+   */
+  selectHomeCity(city: CitySuggestion): void {
+    const displayName = city.state
+      ? `${city.name}, ${city.state}, ${city.country}`
+      : `${city.name}, ${city.country}`;
+
+    this.locationState.setCurrent({ latitude: city.lat, longitude: city.lon }, displayName);
+    this.homeSearchQuery.set('');
+    this.homeSearchResults.set([]);
+    this.isSearchFocused.set(false);
+    this.fetchWeather(city.lat, city.lon, true);
+  }
+
+  /**
+   * Clear home search input
+   */
+  clearHomeSearch(): void {
+    this.homeSearchQuery.set('');
+    this.homeSearchResults.set([]);
+    this.isSearchFocused.set(false);
+  }
+
+  /**
+   * Handle enter key on home search
+   */
+  onSearchSubmit(): void {
+    const results = this.homeSearchResults();
+    if (results.length > 0) {
+      this.selectHomeCity(results[0]);
+    } else if (this.homeSearchQuery().trim().length >= 2) {
+      this.router.navigate(['/search']);
+    }
+  }
+
+  /**
+   * Check if a city from search is in saved locations
+   */
+  isCitySaved(city: CitySuggestion): boolean {
+    return this.savedLocations().some(
+      (loc) => Math.abs(loc.lat - city.lat) < 0.01 && Math.abs(loc.lon - city.lon) < 0.01,
+    );
+  }
+
+  /**
+   * Toggle saving a search result directly
+   */
+  toggleSaveSearchCity(city: CitySuggestion): void {
+    const existing = this.savedLocations().find(
+      (loc) => Math.abs(loc.lat - city.lat) < 0.01 && Math.abs(loc.lon - city.lon) < 0.01,
+    );
+    if (existing) {
+      this.locationState.removeSavedLocation(existing.id);
+    } else {
+      this.locationState.addSavedLocation({
+        name: city.name,
+        state: city.state,
+        country: city.country,
+        lat: city.lat,
+        lon: city.lon,
+      });
+    }
+  }
+
+  /**
+   * Handle clicking the Weather tab in the sidebar/bottom nav
+   */
+  onWeatherNavClick(): void {
+    this.refreshWeather();
+  }
+
+  /**
+   * Handle clicking the Weather Hero card
+   */
+  onWeatherHeroClick(): void {
+    this.refreshWeather();
   }
 }

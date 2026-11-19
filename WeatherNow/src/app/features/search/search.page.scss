@@ -1,31 +1,39 @@
-ion-toolbar {
+.search-page-content {
   --background: #0b131e;
   --color: #ffffff;
-  --border-width: 0;
-
-  ion-title {
-    font-weight: 700;
-    font-size: 19px;
-    letter-spacing: -0.3px;
-    color: #ffffff;
-  }
-
-  ion-back-button {
-    --color: #ffffff;
-  }
+  min-height: 100vh;
 }
 
-ion-content {
-  --background: #0b131e;
-  --color: #ffffff;
+.search-page-layout {
+  display: flex;
+  gap: 24px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  min-height: 100vh;
+}
+
+.search-main-stage {
+  flex: 1;
+  min-width: 0;
+  max-width: 680px;
+}
+
+.search-header {
+  margin-bottom: 24px;
+  padding: 0 4px;
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -0.4px;
+  }
 }
 
 .search-container {
-  max-width: 640px;
-  margin: 0 auto;
   width: 100%;
-  padding: 16px;
-  min-height: 100%;
 }
 
 .search-container ion-searchbar {
@@ -145,5 +153,74 @@ ion-content {
     color: #939eaf;
     font-size: 13px;
     margin: 0;
+  }
+}
+
+.popular-cities-card {
+  background: #202b3b;
+  border-radius: 24px;
+  padding: 24px;
+
+  .card-subtitle {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #939eaf;
+    margin: 0 0 16px 0;
+    text-transform: uppercase;
+  }
+
+  .cities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .city-chip {
+    background: #2a374a;
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+
+    &:hover {
+      background: #0095ff;
+      transform: translateY(-2px);
+
+      .chip-pin,
+      .chip-country {
+        color: rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    .chip-pin {
+      font-size: 16px;
+      color: #0095ff;
+      margin-bottom: 2px;
+    }
+
+    .chip-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .chip-country {
+      font-size: 11px;
+      color: #939eaf;
+    }
+  }
+}
+
+@media (max-width: 991px) {
+  .search-page-layout {
+    padding: 16px 16px 84px;
+  }
+
+  .search-header .page-title {
+    font-size: 24px;
   }
 }

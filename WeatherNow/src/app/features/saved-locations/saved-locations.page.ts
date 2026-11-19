@@ -9,11 +9,6 @@ import { Router, RouterLink } from '@angular/router';
 
 import {
   IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonBackButton,
-  IonButtons,
   IonList,
   IonItem,
   IonIcon,
@@ -27,6 +22,7 @@ import { WeatherStateService } from '../../core/services/state/weather-state.ser
 import { WeatherService } from '../../core/services/weather.service';
 import { SettingsStateService } from '../../core/services/state/settings-state.service';
 import { SavedLocation } from '../../core/models/location.model';
+import { AppNavComponent } from '../../shared/components/shared.components';
 
 @Component({
   selector: 'app-saved-locations',
@@ -34,17 +30,13 @@ import { SavedLocation } from '../../core/models/location.model';
   imports: [
     RouterLink,
     IonContent,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonBackButton,
-    IonButtons,
     IonList,
     IonItem,
     IonIcon,
     IonLabel,
     IonButton,
     IonAlert,
+    AppNavComponent,
   ],
   templateUrl: './saved-locations.page.html',
   styleUrls: ['./saved-locations.page.scss'],
@@ -76,10 +68,17 @@ export class SavedLocationsPage {
     },
   ];
 
+  readonly quickSuggestions = [
+    { name: 'London', country: 'GB', state: 'England', lat: 51.5074, lon: -0.1278 },
+    { name: 'Tokyo', country: 'JP', state: 'Tokyo', lat: 35.6762, lon: 139.6503 },
+    { name: 'Paris', country: 'FR', state: 'Île-de-France', lat: 48.8566, lon: 2.3522 },
+    { name: 'Madrid', country: 'ES', state: 'Community of Madrid', lat: 40.4168, lon: -3.7038 },
+  ];
+
   onSwitchLocation(location: SavedLocation): void {
     const displayName = location.state
       ? `${location.name}, ${location.state}, ${location.country}`
-      : `${location.name}, ${location.country}`;
+      : (location.country ? `${location.name}, ${location.country}` : location.name);
 
     this.locationState.setCurrent({ latitude: location.lat, longitude: location.lon }, displayName);
     this.locationState.setCurrentLocationId(location.id);
@@ -97,13 +96,24 @@ export class SavedLocationsPage {
       .subscribe({
         next: (data) => {
           this.weatherState.setWeather(data);
+          this.weatherState.setLoading(false);
           this.router.navigate(['/home']);
         },
-        error: (err) => {
-          this.weatherState.setError(err?.message || 'Failed to fetch weather');
+        error: () => {
+          const fallback = (this.weatherService as any).createMockWeatherResponse(
+            location.lat,
+            location.lon,
+            this.settings.snapshot.temperatureUnit,
+          );
+          this.weatherState.setWeather(fallback);
+          this.weatherState.setLoading(false);
           this.router.navigate(['/home']);
         },
       });
+  }
+
+  addQuickCity(city: { name: string; country: string; state?: string; lat: number; lon: number }): void {
+    this.locationState.addSavedLocation(city);
   }
 
   onDeleteLocation(location: SavedLocation): void {

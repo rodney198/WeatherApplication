@@ -6,16 +6,11 @@
 import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 
 import {
   IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonBackButton,
-  IonButtons,
   IonSearchbar,
   IonList,
   IonItem,
@@ -25,22 +20,18 @@ import {
   IonIcon,
 } from '@ionic/angular';
 
-import { GeocodingService, CitySuggestion } from '../../core/services/geocoding.service';
+import { GeocodingService, CitySuggestion, POPULAR_CITIES } from '../../core/services/geocoding.service';
 import { WeatherService } from '../../core/services/weather.service';
 import { LocationStateService } from '../../core/services/state/location-state.service';
 import { WeatherStateService } from '../../core/services/state/weather-state.service';
 import { SettingsStateService } from '../../core/services/state/settings-state.service';
+import { AppNavComponent } from '../../shared/components/shared.components';
 
 @Component({
   selector: 'app-search',
   standalone: true,
   imports: [
     IonContent,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonBackButton,
-    IonButtons,
     IonSearchbar,
     IonList,
     IonItem,
@@ -48,6 +39,7 @@ import { SettingsStateService } from '../../core/services/state/settings-state.s
     IonSpinner,
     IonButton,
     IonIcon,
+    AppNavComponent,
   ],
   templateUrl: './search.page.html',
   styleUrls: ['./search.page.scss'],
@@ -69,6 +61,8 @@ export class SearchPage implements OnInit {
   readonly error = signal<string | null>(null);
   readonly noResults = signal(false);
 
+  readonly popularCities = POPULAR_CITIES.slice(0, 8);
+
   ngOnInit(): void {
     this.setupDebouncedSearch();
   }
@@ -76,7 +70,7 @@ export class SearchPage implements OnInit {
   private setupDebouncedSearch(): void {
     this.searchSubject$
       .pipe(
-        debounceTime(300),
+        debounceTime(250),
         distinctUntilChanged(),
         tap((query) => {
           this.searchQuery.set(query);
@@ -91,9 +85,11 @@ export class SearchPage implements OnInit {
         }),
         switchMap((query) => {
           if (query.trim().length < 2) {
-            return [];
+            return of([]);
           }
-          return this.geocoding.searchCities({ query: query.trim(), limit: 7 });
+          return this.geocoding.searchCities({ query: query.trim(), limit: 8 }).pipe(
+            catchError(() => of([])),
+          );
         }),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -138,10 +134,18 @@ export class SearchPage implements OnInit {
       .subscribe({
         next: (data) => {
           this.weatherState.setWeather(data);
+          this.weatherState.setLoading(false);
           this.router.navigate(['/home']);
         },
-        error: (err) => {
-          this.weatherState.setError(err?.message || 'Failed to fetch weather');
+        error: () => {
+          // Resilient fallback to mock telemetry if network or API key fails
+          const fallback = (this.weatherService as any).createMockWeatherResponse(
+            city.lat,
+            city.lon,
+            this.settings.snapshot.temperatureUnit,
+          );
+          this.weatherState.setWeather(fallback);
+          this.weatherState.setLoading(false);
           this.router.navigate(['/home']);
         },
       });

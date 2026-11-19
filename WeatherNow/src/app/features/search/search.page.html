@@ -1,76 +1,93 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Search City</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="search-page-content" [fullscreen]="true">
+  <div class="search-page-layout">
+    <app-nav activeTab="cities"></app-nav>
 
-<ion-content>
-  <div class="search-container">
-    <ion-searchbar
-      (ionInput)="onSearchInput($event)"
-      placeholder="Search for a city..."
-      [debounce]="0"
-      animated
-    ></ion-searchbar>
+    <main class="search-main-stage">
+      <div class="search-header">
+        <h1 class="page-title">Explore Cities</h1>
+      </div>
 
-    <div class="results-container">
-      <!-- Loading -->
-      @if (loading()) {
-        <div class="loading-state">
-          <ion-spinner name="crescent"></ion-spinner>
-          <p>Searching cities...</p>
-        </div>
-      }
+      <div class="search-container">
+        <ion-searchbar
+          (ionInput)="onSearchInput($event)"
+          placeholder="Search for a city..."
+          [debounce]="0"
+          animated
+        ></ion-searchbar>
 
-      <!-- Error -->
-      @if (error()) {
-        <div class="error-state">
-          <ion-icon name="alert-circle"></ion-icon>
-          <p>{{ error() }}</p>
-        </div>
-      }
-
-      <!-- No Results -->
-      @if (noResults() && !loading()) {
-        <div class="empty-state">
-          <ion-icon name="search"></ion-icon>
-          <p>No cities found for "{{ searchQuery() }}"</p>
-        </div>
-      }
-
-      <!-- Suggestions -->
-      @if (suggestions().length > 0) {
-        <ion-list class="suggestions-list">
-          @for (city of suggestions(); track city.lat + ',' + city.lon) {
-            <ion-item (click)="onCitySelect(city)" button detail="false">
-              <ion-icon name="location" slot="start"></ion-icon>
-              <ion-label>
-                <h3>{{ city.name }}</h3>
-                @if (city.state) {
-                  <p>{{ city.state }}, {{ city.country }}</p>
-                } @else {
-                  <p>{{ city.country }}</p>
-                }
-              </ion-label>
-              <ion-button
-                slot="end"
-                fill="clear"
-                (click)="toggleSaveCity(city, $event)"
-                [attr.aria-label]="isCitySaved(city) ? 'Remove from favorites' : 'Save to favorites'"
-              >
-                <ion-icon
-                  slot="icon-only"
-                  [name]="isCitySaved(city) ? 'star' : 'star-outline'"
-                  [color]="isCitySaved(city) ? 'warning' : 'medium'"
-                ></ion-icon>
-              </ion-button>
-            </ion-item>
+        <div class="results-container">
+          <!-- Loading -->
+          @if (loading()) {
+            <div class="loading-state">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Searching cities...</p>
+            </div>
           }
-        </ion-list>
-      }
-    </div>
+
+          <!-- Error -->
+          @if (error() && !loading()) {
+            <div class="error-state">
+              <ion-icon name="alert-circle"></ion-icon>
+              <p>{{ error() }}</p>
+            </div>
+          }
+
+          <!-- No Results -->
+          @if (noResults() && !loading()) {
+            <div class="empty-state">
+              <ion-icon name="search"></ion-icon>
+              <p>No cities found for "{{ searchQuery() }}"</p>
+            </div>
+          }
+
+          <!-- Suggestions List -->
+          @if (suggestions().length > 0) {
+            <ion-list class="suggestions-list">
+              @for (city of suggestions(); track city.lat + ',' + city.lon) {
+                <ion-item (click)="onCitySelect(city)" button detail="false">
+                  <ion-icon name="location" slot="start"></ion-icon>
+                  <ion-label>
+                    <h3>{{ city.name }}</h3>
+                    @if (city.state) {
+                      <p>{{ city.state }}, {{ city.country }}</p>
+                    } @else {
+                      <p>{{ city.country }}</p>
+                    }
+                  </ion-label>
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    (click)="toggleSaveCity(city, $event)"
+                    [attr.aria-label]="isCitySaved(city) ? 'Remove from favorites' : 'Save to favorites'"
+                  >
+                    <ion-icon
+                      slot="icon-only"
+                      [name]="isCitySaved(city) ? 'star' : 'star-outline'"
+                      [color]="isCitySaved(city) ? 'warning' : 'medium'"
+                    ></ion-icon>
+                  </ion-button>
+                </ion-item>
+              }
+            </ion-list>
+          }
+
+          <!-- Popular Quick Cities when search is empty -->
+          @if (!searchQuery() && suggestions().length === 0) {
+            <div class="popular-cities-card">
+              <h2 class="card-subtitle">POPULAR CITIES</h2>
+              <div class="cities-grid">
+                @for (city of popularCities; track city.lat + ',' + city.lon) {
+                  <div class="city-chip" (click)="onCitySelect(city)">
+                    <ion-icon name="location-outline" class="chip-pin"></ion-icon>
+                    <span class="chip-name">{{ city.name }}</span>
+                    <span class="chip-country">{{ city.country }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </main>
   </div>
 </ion-content>

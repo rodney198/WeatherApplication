@@ -1,32 +1,47 @@
-ion-toolbar {
+.saved-content {
   --background: #0b131e;
   --color: #ffffff;
-  --border-width: 0;
-
-  ion-title {
-    font-weight: 700;
-    font-size: 19px;
-    letter-spacing: -0.3px;
-    color: #ffffff;
-  }
-
-  ion-back-button,
-  ion-button {
-    --color: #ffffff;
-  }
+  min-height: 100vh;
 }
 
-ion-content {
-  --background: #0b131e;
-  --color: #ffffff;
+.saved-layout {
+  display: flex;
+  gap: 24px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  min-height: 100vh;
+}
+
+.saved-main {
+  flex: 1;
+  min-width: 0;
+  max-width: 680px;
+}
+
+.saved-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 0 4px;
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -0.4px;
+  }
+
+  .add-loc-btn {
+    --color: #0095ff;
+    font-size: 24px;
+  }
 }
 
 .saved-locations-container {
-  max-width: 640px;
-  margin: 0 auto;
   width: 100%;
-  padding: 16px;
-  min-height: 100%;
 }
 
 .locations-list {
@@ -78,10 +93,12 @@ ion-content {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 20px;
+  padding: 48px 20px;
   color: #ffffff;
   text-align: center;
   gap: 12px;
+  background: #202b3b;
+  border-radius: 24px;
 
   .empty-icon {
     font-size: 56px;
@@ -100,14 +117,48 @@ ion-content {
     font-size: 14px;
     color: #939eaf;
     margin: 0;
-    max-width: 280px;
+    max-width: 300px;
     line-height: 1.4;
   }
 
+  .quick-chips-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 14px 0 8px;
+  }
+
+  .quick-chip {
+    background: #2a374a;
+    border: 1px solid rgba(0, 149, 255, 0.3);
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #0095ff;
+    }
+  }
+
   .search-btn {
-    margin-top: 16px;
-    --color: #ffffff;
+    margin-top: 12px;
     --background: #0095ff;
+    --color: #ffffff;
     --border-radius: 20px;
+  }
+}
+
+@media (max-width: 991px) {
+  .saved-layout {
+    padding: 16px 16px 84px;
+  }
+
+  .saved-header .page-title {
+    font-size: 24px;
   }
 }

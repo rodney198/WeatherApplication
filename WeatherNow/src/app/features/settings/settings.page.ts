@@ -8,11 +8,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
   IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonBackButton,
-  IonButtons,
   IonList,
   IonItem,
   IonLabel,
@@ -25,23 +20,20 @@ import { SettingsStateService } from '../../core/services/state/settings-state.s
 import { LocationStateService } from '../../core/services/state/location-state.service';
 import { TemperatureUnit } from '../../core/models/settings.model';
 import { AppStorageService } from '../../core/services/storage.service';
+import { AppNavComponent } from '../../shared/components/shared.components';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
   imports: [
     IonContent,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonBackButton,
-    IonButtons,
     IonList,
     IonItem,
     IonLabel,
     IonToggle,
     IonIcon,
     IonAlert,
+    AppNavComponent,
   ],
   templateUrl: './settings.page.html',
   styleUrls: ['./settings.page.scss'],

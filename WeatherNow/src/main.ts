@@ -59,6 +59,8 @@ import {
   calendarOutline,
   navigate,
   navigateOutline,
+  closeCircle,
+  closeCircleOutline,
 } from 'ionicons/icons';
 
 import { appConfig } from './app/app.config';
@@ -118,6 +120,8 @@ addIcons({
   calendarOutline,
   navigate,
   navigateOutline,
+  closeCircle,
+  closeCircleOutline,
 });
 
 bootstrapApplication(AppComponent, appConfig).catch((err) =>

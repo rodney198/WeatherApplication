@@ -1,15 +1,19 @@
 <ion-content class="dashboard-content" [fullscreen]="true">
-  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
-    <ion-refresher-content></ion-refresher-content>
-  </ion-refresher>
-
   <div class="dashboard-layout">
     <!-- Left Navigation Rail (Desktop) & Bottom Navigation (Mobile) -->
-    <app-nav activeTab="weather"></app-nav>
+    <app-nav activeTab="weather" (weatherClick)="onWeatherNavClick()"></app-nav>
 
     <!-- Main Content Stage -->
     <main class="main-stage">
-      <!-- Loading State -->
+      <!-- Background Updating Badge -->
+      @if (loading() && hasData()) {
+        <div class="top-updating-indicator">
+          <ion-spinner name="crescent" class="inline-spinner"></ion-spinner>
+          <span>Updating telemetry...</span>
+        </div>
+      }
+
+      <!-- Full-Page Loading State (Initial fetch only) -->
       @if (loading() && !hasData()) {
         <div class="loading-state-card">
           <ion-spinner name="crescent" class="loading-spinner"></ion-spinner>
@@ -18,7 +22,7 @@
       }
 
       <!-- Error State -->
-      @if (!loading() && errorMessage()) {
+      @if (!loading() && errorMessage() && !hasData()) {
         <div class="error-container">
           <app-error-state
             [message]="errorMessage() || 'Failed to load weather'"
@@ -39,26 +43,67 @@
         <div class="content-columns">
           <!-- Primary Middle Column -->
           <div class="primary-column">
-            <!-- Top Search Input -->
-            <div class="search-bar-wrapper" (click)="onSearchClick()">
-              <ion-icon name="search-outline" class="search-input-icon"></ion-icon>
-              <input
-                type="text"
-                readonly
-                placeholder="Search for cities"
-                class="search-fake-input"
-                aria-label="Search for cities"
-              />
+            <!-- Interactive Top Search Input with Autocomplete -->
+            <div class="search-section-wrapper">
+              <div class="search-bar-wrapper">
+                <ion-icon name="search-outline" class="search-input-icon"></ion-icon>
+                <input
+                  type="text"
+                  placeholder="Search for cities"
+                  class="search-real-input"
+                  [value]="homeSearchQuery()"
+                  (input)="onHomeSearchInput($event)"
+                  (focus)="isSearchFocused.set(true)"
+                  (keydown.enter)="onSearchSubmit()"
+                  aria-label="Search for cities"
+                />
+                @if (homeSearchQuery()) {
+                  <button class="search-clear-btn" (click)="clearHomeSearch()" aria-label="Clear search input">
+                    <ion-icon name="close-circle-outline"></ion-icon>
+                  </button>
+                }
+              </div>
+
+              <!-- Instant Autocomplete Dropdown Menu -->
+              @if (isSearchFocused() && homeSearchResults().length > 0) {
+                <div class="search-dropdown-menu">
+                  @for (city of homeSearchResults(); track city.lat + ',' + city.lon) {
+                    <div class="search-dropdown-item" (click)="selectHomeCity(city)">
+                      <ion-icon name="location-outline" class="dropdown-item-icon"></ion-icon>
+                      <div class="dropdown-item-info">
+                        <span class="dropdown-item-name">{{ city.name }}</span>
+                        <span class="dropdown-item-sub">
+                          {{ city.state ? city.state + ', ' + city.country : city.country }}
+                        </span>
+                      </div>
+                      <button
+                        class="dropdown-item-star"
+                        (click)="$event.stopPropagation(); toggleSaveSearchCity(city)"
+                        [class.is-starred]="isCitySaved(city)"
+                        [attr.aria-label]="isCitySaved(city) ? 'Remove favorite' : 'Save favorite'"
+                      >
+                        <ion-icon [name]="isCitySaved(city) ? 'star' : 'star-outline'"></ion-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
             </div>
 
             <!-- Current Weather Hero Card -->
-            <div class="hero-card">
+            <div
+              class="hero-card"
+              (click)="onWeatherHeroClick()"
+              role="button"
+              tabindex="0"
+              title="Click to refresh current weather"
+            >
               <div class="hero-left">
                 <div class="city-header-row">
                   <h1 class="city-name">{{ currentLocationName() }}</h1>
                   <button
                     class="fav-btn"
-                    (click)="toggleSaveLocation()"
+                    (click)="$event.stopPropagation(); toggleSaveLocation()"
                     [class.is-fav]="isSavedLocation()"
                     [attr.aria-label]="isSavedLocation() ? 'Remove from favorites' : 'Save to favorites'"
                   >

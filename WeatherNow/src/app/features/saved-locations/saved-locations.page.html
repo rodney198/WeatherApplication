@@ -1,58 +1,66 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Saved Locations</ion-title>
-    <ion-buttons slot="end">
-      <ion-button routerLink="/search" aria-label="Add new location">
-        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="saved-content" [fullscreen]="true">
+  <div class="saved-layout">
+    <app-nav activeTab="saved"></app-nav>
 
-<ion-content>
-  <div class="saved-locations-container">
-    @if (savedLocations().length > 0) {
-      <ion-list class="locations-list">
-        @for (location of savedLocations(); track location.id) {
-          <ion-item
-            (click)="onSwitchLocation(location)"
-            button
-            detail="false"
-            [class.current]="location.isCurrent"
-          >
-            <ion-icon name="location" slot="start"></ion-icon>
-            <ion-label>
-              <h3>{{ location.name }}</h3>
-              @if (location.state) {
-                <p>{{ location.state }}, {{ location.country }}</p>
-              } @else {
-                <p>{{ location.country }}</p>
-              }
-            </ion-label>
-            <ion-button
-              slot="end"
-              fill="clear"
-              (click)="$event.stopPropagation(); onDeleteLocation(location)"
-              aria-label="Delete location"
-            >
-              <ion-icon name="trash-outline" color="danger"></ion-icon>
-            </ion-button>
-          </ion-item>
-        }
-      </ion-list>
-    } @else {
-      <div class="empty-state">
-        <ion-icon name="bookmark-outline" class="empty-icon"></ion-icon>
-        <h3>No saved locations</h3>
-        <p>Add cities to your favorites from the weather dashboard or search page</p>
-        <ion-button routerLink="/search" fill="outline" class="search-btn">
-          Search Cities
+    <main class="saved-main">
+      <div class="saved-header">
+        <h1 class="page-title">Saved Locations</h1>
+        <ion-button routerLink="/search" fill="clear" class="add-loc-btn" aria-label="Add new location">
+          <ion-icon slot="icon-only" name="add-outline"></ion-icon>
         </ion-button>
       </div>
-    }
+
+      <div class="saved-locations-container">
+        @if (savedLocations().length > 0) {
+          <ion-list class="locations-list">
+            @for (location of savedLocations(); track location.id) {
+              <ion-item
+                (click)="onSwitchLocation(location)"
+                button
+                detail="false"
+                [class.current]="location.isCurrent"
+              >
+                <ion-icon name="location" slot="start"></ion-icon>
+                <ion-label>
+                  <h3>{{ location.name }}</h3>
+                  @if (location.state) {
+                    <p>{{ location.state }}, {{ location.country }}</p>
+                  } @else {
+                    <p>{{ location.country }}</p>
+                  }
+                </ion-label>
+                <ion-button
+                  slot="end"
+                  fill="clear"
+                  (click)="$event.stopPropagation(); onDeleteLocation(location)"
+                  aria-label="Delete location"
+                >
+                  <ion-icon name="trash-outline" color="danger"></ion-icon>
+                </ion-button>
+              </ion-item>
+            }
+          </ion-list>
+        } @else {
+          <div class="empty-state">
+            <ion-icon name="bookmark-outline" class="empty-icon"></ion-icon>
+            <h3>No saved locations</h3>
+            <p>Save cities from the weather dashboard or add quick favorites below:</p>
+
+            <div class="quick-chips-row">
+              @for (city of quickSuggestions; track city.name) {
+                <button class="quick-chip" (click)="addQuickCity(city)">
+                  + {{ city.name }}
+                </button>
+              }
+            </div>
+
+            <ion-button routerLink="/search" fill="solid" class="search-btn">
+              Search Cities
+            </ion-button>
+          </div>
+        }
+      </div>
+    </main>
   </div>
 
   <ion-alert
