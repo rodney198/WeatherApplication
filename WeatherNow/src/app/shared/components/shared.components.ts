@@ -326,6 +326,11 @@ export class WeatherIconComponent {
   `,
   styles: [
     `
+    :host {
+      display: block;
+      flex-shrink: 0;
+    }
+
     /* Desktop Sidebar (min-width: 992px) */
     .desktop-sidebar {
       display: none;
@@ -337,6 +342,9 @@ export class WeatherIconComponent {
       flex-direction: column;
       align-items: center;
       gap: 32px;
+      position: sticky;
+      top: 24px;
+      align-self: flex-start;
     }
 
     .logo-box {

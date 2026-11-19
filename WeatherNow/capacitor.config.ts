@@ -4,17 +4,14 @@ const config: CapacitorConfig = {
   appId: 'com.weatherapp.now',
   appName: 'WeatherNow',
   webDir: 'www',
-  // Allow mixed content for development
-  allowMixedContent: true,
   // iOS-specific settings
   ios: {
     // Allow inline web content
-    contentInset: 'scroll',
+    contentInset: 'automatic',
   },
   // Android-specific settings
   android: {
-    // Allow clear text for development
-    allowCleartext: false,
+    allowMixedContent: true,
   },
   // Plugin configurations
   plugins: {

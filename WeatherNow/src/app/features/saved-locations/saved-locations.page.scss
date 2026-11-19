@@ -1,7 +1,6 @@
 .saved-content {
   --background: #0b131e;
   --color: #ffffff;
-  min-height: 100vh;
 }
 
 .saved-layout {
@@ -10,7 +9,10 @@
   max-width: 1240px;
   margin: 0 auto;
   padding: 24px 20px 48px;
-  min-height: 100vh;
+  min-height: 100%;
+  box-sizing: border-box;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .saved-main {
@@ -155,7 +157,9 @@
 
 @media (max-width: 991px) {
   .saved-layout {
+    flex-direction: column;
     padding: 16px 16px 84px;
+    gap: 16px;
   }
 
   .saved-header .page-title {
